@@ -58,7 +58,7 @@ with GestureRecognizer.create_from_options(options) as recognizer:
     
 
 # Codice webcam
-
+"""
 cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
@@ -84,4 +84,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
+"""
