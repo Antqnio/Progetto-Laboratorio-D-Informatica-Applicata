@@ -48,6 +48,7 @@ with GestureRecognizer.create_from_options(options) as recognizer:
         # The results are accessible via the `result_callback` provided in
         # the `GestureRecognizerOptions` object.
         # The gesture recognizer must be created with the live stream mode.
+        frame_timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
         recognizer.recognize_async(mp_image, frame_timestamp_ms)
         # Break the loop and release the webcam if the user presses the 'q' key.
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -58,30 +59,6 @@ with GestureRecognizer.create_from_options(options) as recognizer:
     
 
 # Codice webcam
-"""
-cap = cv2.VideoCapture(0)
 
-if not cap.isOpened():
-    print("Webcam non accessibile")
-    exit()
 
-print("Webcam aperta correttamente!")
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        continue
-    
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_frame_from_opencv)
-    
-    risultato_riconoscimento = recognizer.recognize_async(mp_image, frame_timestamp_ms)
-    top_gesture = risultato_riconoscimento.gestures[0][0]
-    hand_landmarks = risultato_riconoscimento.hand_landmarks
-    frame_elaborato = frame.__deepcopy__()
-    cv2.imshow("Webcam", frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-"""
