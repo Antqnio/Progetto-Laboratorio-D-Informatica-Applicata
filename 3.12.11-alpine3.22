@@ -1,0 +1,35 @@
+Using default tag: latest
+latest: Pulling from library/python
+0c01110621e0: Pulling fs layer
+3b1eb73e9939: Pulling fs layer
+b1b8a0660a31: Pulling fs layer
+48b8862a18fa: Pulling fs layer
+20d0b4e6a2e6: Pulling fs layer
+77a6ac598bc1: Pulling fs layer
+5cc4a19fbac0: Pulling fs layer
+48b8862a18fa: Waiting
+77a6ac598bc1: Waiting
+20d0b4e6a2e6: Waiting
+3b1eb73e9939: Verifying Checksum
+3b1eb73e9939: Download complete
+0c01110621e0: Verifying Checksum
+0c01110621e0: Download complete
+20d0b4e6a2e6: Verifying Checksum
+20d0b4e6a2e6: Download complete
+0c01110621e0: Pull complete
+3b1eb73e9939: Pull complete
+b1b8a0660a31: Verifying Checksum
+b1b8a0660a31: Download complete
+5cc4a19fbac0: Verifying Checksum
+5cc4a19fbac0: Download complete
+b1b8a0660a31: Pull complete
+77a6ac598bc1: Download complete
+48b8862a18fa: Verifying Checksum
+48b8862a18fa: Download complete
+48b8862a18fa: Pull complete
+20d0b4e6a2e6: Pull complete
+77a6ac598bc1: Pull complete
+5cc4a19fbac0: Pull complete
+Digest: sha256:5f69d22a88dd4cc4ee1576def19aef48c8faa1b566054c44291183831cbad13b
+Status: Downloaded newer image for python:latest
+docker.io/library/python:latest
