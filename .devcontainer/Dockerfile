@@ -1,5 +1,11 @@
 FROM python:3.12.3
 
+# Install system libraries needed by OpenCV
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists
+
 # Set the working directory
 WORKDIR /app
 
