@@ -49,6 +49,6 @@ Write-Output "Administrator privileges required to bind the device..."
 Start-Process "usbipd" -ArgumentList "bind --busid $deviceId" -Verb RunAs -Wait
 
 # Attach the device to WSL
-usbipd attach --busid $deviceId --wsl docker-desktop
+usbipd attach --busid $deviceId --wsl Ubuntu
 
 Write-Output "Webcam with BusID $deviceId successfully attached to WSL."
