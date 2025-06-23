@@ -1,27 +1,54 @@
-# Verifica se usbipd è installato
-if (-not (Get-Command usbipd -ErrorAction SilentlyContinue)) {
-    Write-Output "usbipd non trovato. Scarico e installo..."
+# ========================
+# USBIPD Script for WSL
+# ========================
 
-    Invoke-WebRequest -Uri "https://github.com/dorssel/usbipd-win/releases/latest/download/usbipd-win.msi" `
-                      -OutFile "$env:TEMP\usbipd-win.msi"
-
-    Start-Process msiexec.exe -Wait -ArgumentList "/i `"$env:TEMP\usbipd-win.msi`" /qn"
-    Write-Output "usbipd installato."
-} else {
-    Write-Output "usbipd è già installato."
+function Is-Usbipd-Available {
+    return (Get-Command usbipd -ErrorAction SilentlyContinue) -ne $null
 }
 
-# Avvia il servizio (se non è già attivo)
-Start-Service usbipd
+# Check if usbipd is installed
+if (-not (Is-Usbipd-Available)) {
+    Write-Output "usbipd not found. Updating WSL and installing via winget..."
 
-# Mostra tutti i dispositivi USB condivisibili
-Write-Output "Dispositivi USB disponibili:"
+    wsl --update
+
+    winget install usbipd
+
+    # Force reload of current PATH
+    $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
+                [System.Environment]::GetEnvironmentVariable("Path", "User")
+
+    if (-not (Is-Usbipd-Available)) {
+        Write-Error "usbipd was installed but is not available in PATH. Restart the shell or PC and try again."
+        exit 1
+    }
+
+    Write-Output "usbipd successfully installed."
+} else {
+    Write-Output "usbipd is already installed."
+}
+
+# Check and start the usbipd service
+$service = Get-Service -Name "usbipd" -ErrorAction SilentlyContinue
+if ($service -and $service.Status -ne "Running") {
+    Start-Service usbipd
+    Write-Output "usbipd service started."
+} elseif (-not $service) {
+    Write-Warning "The 'usbipd' service is not registered. A system reboot might be required."
+}
+
+# List USB devices
+Write-Output "Available USB devices:"
 usbipd list
 
-# Chiedi all’utente di inserire l'ID del dispositivo
-$deviceId = Read-Host "Inserisci l'ID della webcam da attaccare (es: 1-4)"
+# User input
+$deviceId = Read-Host "Enter the webcam ID to attach (e.g., 2-6)"
 
-# Collega il dispositivo alla WSL
-usbipd wsl attach --busid $deviceId --wsl
+# Bind the device as administrator
+Write-Output "Administrator privileges required to bind the device..."
+Start-Process "usbipd" -ArgumentList "bind --busid $deviceId" -Verb RunAs -Wait
 
-Write-Output "Webcam con BusID $deviceId collegata a WSL"
+# Attach the device to WSL
+usbipd attach --busid $deviceId --wsl
+
+Write-Output "Webcam with BusID $deviceId successfully attached to WSL."
