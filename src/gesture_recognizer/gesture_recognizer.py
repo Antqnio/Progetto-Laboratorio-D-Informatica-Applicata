@@ -27,7 +27,12 @@ with GestureRecognizer.create_from_options(options) as recognizer:
     # Use OpenCV’s VideoCapture to start capturing from the webcam.
     
     # Select a webcam to capture video from.
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+
     if not cap.isOpened():
         print("Webcam non accessibile")
         exit()

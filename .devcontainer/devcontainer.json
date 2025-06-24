@@ -8,12 +8,16 @@
 
 		"context":".."
 	},
-	
 	"runArgs": [
-		"--device=/dev/video0",
-		"-e", "DISPLAY=:0",
-		"-v", "/tmp/.X11-unix:/tmp/.X11-unix"
-  	],
+		// monta la webcam
+		"--device=/dev/video0:/dev/video0",
+		// passa la variabile DISPLAY (in WSL hai già export DISPLAY=:0)
+		"-e", "DISPLAY=${localEnv:DISPLAY}",
+		// monta il socket X11
+		"-v", "/tmp/.X11-unix:/tmp/.X11-unix",
+		// (opzionale) se hai problemi di permessi
+		"--privileged"
+	],
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
