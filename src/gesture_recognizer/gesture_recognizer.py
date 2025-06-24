@@ -29,8 +29,8 @@ with GestureRecognizer.create_from_options(options) as recognizer:
     # Select a webcam to capture video from.
     cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 
     if not cap.isOpened():
@@ -47,8 +47,13 @@ with GestureRecognizer.create_from_options(options) as recognizer:
             continue # Or break if you want to stop on failure.
         # Show the frame in a window using OpenCV’s imshow() function.
         cv2.imshow("Webcam", frame)
+        # Convert the frame from OpenCV BGR format to RGB format.
+        # MediaPipe uses RGB format for image processing.
+        # OpenCV uses BGR format by default.
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         # Convert the frame from OpenCV to a numpy array.
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+        
         # Send live image data to perform gesture recognition.
         # The results are accessible via the `result_callback` provided in
         # the `GestureRecognizerOptions` object.
