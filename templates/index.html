@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Associa Gesti a Comandi</title>
+</head>
+<body>
+    <h1>Associa Gesti a Comandi</h1>
+
+    <form method="POST">
+        {% for gesture in gestures %}
+        <div>
+            <label for="{{ gesture }}">{{ gesture }}</label>
+            <input type="text" id="{{ gesture }}" name="{{ gesture }}" value="{{ mappings.get(gesture, '') }}">
+        </div>
+        {% endfor %}
+        <button type="submit">Salva Associazioni</button>
+    </form>
+
+    <hr>
+
+    <h2>Riconoscimento Gesti</h2>
+    {% if active %}
+        <p style="color: green;">🟢 Attivo</p>
+        <form action="{{ url_for('stop_recognition') }}" method="get">
+            <button type="submit">Ferma Riconoscimento</button>
+        </form>
+    {% else %}
+        <p style="color: red;">🔴 Inattivo</p>
+        <form action="{{ url_for('start_recognition') }}" method="get">
+            <button type="submit">Avvia Riconoscimento</button>
+        </form>
+    {% endif %}
+</body>
+</html>
