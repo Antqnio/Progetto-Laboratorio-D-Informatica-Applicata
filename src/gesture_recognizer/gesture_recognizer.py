@@ -26,11 +26,21 @@ def start_gesture_recognition():
 
     def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
         
-        print('gesture recognition result: {}'.format(result.gestures[-1]))
+        #print('gesture recognition result: {}'.format(result.gestures))
         # result_gesture = result.gestures[0].categoryName if result.gestures else "No gesture recognized"
         # print(f"[INFO] Riconosciuto gesto: {result_gesture}")
         
         #send_result(result_gesture)
+        # Print all recognized category_names:
+        for gesture_list in result.gestures:
+            for classification in gesture_list:
+                # print(classification.category_name)
+                if classification.category_name is not None:
+                    # Send the recognized gesture to the server:
+                    send_result(classification.category_name)
+        # If there are no gestures recognized, print a message:
+        if not result.gestures:
+            print("No gesture recognized")
 
     options = GestureRecognizerOptions(
         base_options = BaseOptions(model_asset_path=model_path),

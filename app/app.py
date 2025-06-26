@@ -1,14 +1,39 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for
 import socket
 import threading
-import os
+import subprocess
+
+# Dinamically get the Windows host IP address
+# This function assumes that the server is running on a Windows machine and retrieves the IP address of the nameserver from the resolv.conf file.
+# If it fails, it returns a fallback IP.
+def get_windows_host_ip():
+    """
+    Dinamically get the Windows host IP address
+    This function assumes that the server is running on a Windows machine
+    and retrieves the IP address of the nameserver from the resolv.conf file.
+    If it fails, it returns a fallback IP.
+
+    Returns:
+        string: Windows host IP address or a fallback IP if the retrieval fails.
+    """
+    try:
+        output = subprocess.check_output("cat /etc/resolv.conf | grep nameserver", shell=True)
+        return output.decode().split()[1]
+    except Exception:
+        return "127.0.0.1"  # fallback
+
+
+
+
+
 app = Flask(
     __name__,
     template_folder=os.path.join(os.path.dirname(__file__), '..', 'templates'),
     static_folder=os.path.join(os.path.dirname(__file__), '..', 'static')
 )
 
-SERVER_IP = '192.168.1.105'  # IP del server TCP su Windows
+SERVER_IP = get_windows_host_ip()  # IP del server TCP su Windows
 SERVER_PORT = 9000
 
 GESTURES = ["Thumbs Up", "Thumbs Down", "Open Palm", "Closed Fist", "Victory", "Gang", "Pointing Up"]
