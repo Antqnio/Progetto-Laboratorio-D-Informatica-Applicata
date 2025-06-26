@@ -69,6 +69,3 @@ with GestureRecognizer.create_from_options(options) as recognizer:
     
 
 # Codice webcam
-
-
-
