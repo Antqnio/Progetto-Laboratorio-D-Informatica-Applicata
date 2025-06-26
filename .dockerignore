@@ -1,1 +1,24 @@
+# Ignore standalone scripts not needed in the container
 server.py
+
+# Ignore Python bytecode and caches
+*.pyc
+__pycache__/
+
+# Ignore editor/IDE configuration folders
+.vscode/
+.idea/
+
+# Ignore Git repository data
+.git/
+
+# Ignore local development scripts
+webcam_enable.ps1
+
+# Ignore files not required in the image
+struttura.txt
+3.12.11-alpine3.22
+.gitignore
+
+# Ignore log files
+*.log
