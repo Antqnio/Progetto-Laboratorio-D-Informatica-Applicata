@@ -16,7 +16,12 @@ WORKDIR /app
 
 # Copy requirements and install dependencies
 COPY requirements.lock .
-RUN pip install --no-cache-dir -r requirements.lock
+RUN pip install --no-cache-dir -r requirements.lock \ 
+    && rm -f requirements.lock
+
+# Copy and give execute permission to the start_client.sh script
+COPY start_client.sh .
+RUN chmod 755 start_client.sh
 
 # Copy the current directory contents
 COPY . .

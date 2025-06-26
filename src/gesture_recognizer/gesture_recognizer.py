@@ -1,71 +1,84 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import os
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-
-model_path = './gesture_recognizer.task'
-
-BaseOptions = mp.tasks.BaseOptions
-GestureRecognizer = mp.tasks.vision.GestureRecognizer
-GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
-GestureRecognizerResult = mp.tasks.vision.GestureRecognizerResult
-VisionRunningMode = mp.tasks.vision.RunningMode
+from app.app import send_result 
 
 # Create a gesture recognizer instance with the live stream mode:
-def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-    print('gesture recognition result:  {}'.format(result))
 
-options = GestureRecognizerOptions(
-    base_options = BaseOptions(model_asset_path=model_path),
-    running_mode=VisionRunningMode.LIVE_STREAM,
-    result_callback=print_result,
-    num_hands=2)
-with GestureRecognizer.create_from_options(options) as recognizer:
-    # The detector is initialized. Use it here.
-    # ...
-    # Use OpenCV’s VideoCapture to start capturing from the webcam.
-    
-    # Select a webcam to capture video from.
-    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+def start_gesture_recognition():
+    """
+    Starts the gesture recognizer using MediaPipe.
+    This function initializes the gesture recognizer and starts capturing video from the webcam.
+    It processes the video frames to recognize gestures in real-time.
+    """
+
+    model_path = os.path.join(os.path.dirname(__file__), "gesture_recognizer.task")
+
+    BaseOptions = mp.tasks.BaseOptions
+    GestureRecognizer = mp.tasks.vision.GestureRecognizer
+    GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
+    GestureRecognizerResult = mp.tasks.vision.GestureRecognizerResult
+    VisionRunningMode = mp.tasks.vision.RunningMode
 
 
-    if not cap.isOpened():
-        print("Webcam non accessibile")
-        exit()
-
-    print("Webcam aperta correttamente!")
-    # Create a loop to read the latest frame from the camera using VideoCapture#read()
-    while True:
+    def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
         
-        # Read a frame from the webcam.
-        ret, frame = cap.read()
-        if not ret:
-            continue # Or break if you want to stop on failure.
-        # Show the frame in a window using OpenCV’s imshow() function.
-        cv2.imshow("Webcam", frame)
-        # Convert the frame from OpenCV BGR format to RGB format.
-        # MediaPipe uses RGB format for image processing.
-        # OpenCV uses BGR format by default.
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        # Convert the frame from OpenCV to a numpy array.
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+        print('gesture recognition result: {}'.format(result.gestures[-1]))
+        # result_gesture = result.gestures[0].categoryName if result.gestures else "No gesture recognized"
+        # print(f"[INFO] Riconosciuto gesto: {result_gesture}")
         
-        # Send live image data to perform gesture recognition.
-        # The results are accessible via the `result_callback` provided in
-        # the `GestureRecognizerOptions` object.
-        # The gesture recognizer must be created with the live stream mode.
-        frame_timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
-        recognizer.recognize_async(mp_image, frame_timestamp_ms)
-        # Break the loop and release the webcam if the user presses the 'q' key.
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            cap.release()
-            cv2.destroyAllWindows()
-            break
-    
-    
+        #send_result(result_gesture)
 
-# Codice webcam
+    options = GestureRecognizerOptions(
+        base_options = BaseOptions(model_asset_path=model_path),
+        running_mode=VisionRunningMode.LIVE_STREAM,
+        result_callback=get_result,
+        num_hands=2)
+    with GestureRecognizer.create_from_options(options) as recognizer:
+        # The detector is initialized. Use it here.
+        # ...
+        # Use OpenCV’s VideoCapture to start capturing from the webcam.
+        
+        # Select a webcam to capture video from.
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+
+
+        if not cap.isOpened():
+            print("Webcam non accessibile")
+            exit()
+
+        print("Webcam aperta correttamente!")
+        # Create a loop to read the latest frame from the camera using VideoCapture#read()
+        while True:
+            
+            # Read a frame from the webcam.
+            ret, frame = cap.read()
+            if not ret:
+                continue # Or break if you want to stop on failure.
+            # Show the frame in a window using OpenCV’s imshow() function.
+            cv2.imshow("Webcam", frame)
+            # Convert the frame from OpenCV BGR format to RGB format.
+            # MediaPipe uses RGB format for image processing.
+            # OpenCV uses BGR format by default.
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Convert the frame from OpenCV to a numpy array.
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+            
+            # Send live image data to perform gesture recognition.
+            # The results are accessible via the `result_callback` provided in
+            # the `GestureRecognizerOptions` object.
+            # The gesture recognizer must be created with the live stream mode.
+            frame_timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
+            recognizer.recognize_async(mp_image, frame_timestamp_ms)
+
+            # Break the loop and release the webcam if the user presses the 'q' key.
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                cap.release()
+                cv2.destroyAllWindows()
+                break
