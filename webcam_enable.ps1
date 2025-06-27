@@ -37,6 +37,10 @@ if ($service -and $service.Status -ne "Running") {
     Write-Warning "The 'usbipd' service is not registered. A system reboot might be required."
 }
 
+# Ensure WSL is running
+Write-Output "Starting WSL instance..."
+wsl -d Ubuntu -- echo "WSL started"
+
 # List USB devices
 Write-Output "Available USB devices:"
 usbipd list
