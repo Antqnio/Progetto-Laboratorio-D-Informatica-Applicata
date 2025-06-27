@@ -33,7 +33,7 @@ app = Flask(
     static_folder=os.path.join(os.path.dirname(__file__), '..', 'static')
 )
 
-SERVER_IP = get_windows_host_ip()  # IP del server TCP su Windows
+SERVER_IP = "host.docker.internal"  # IP del server TCP su Windows
 SERVER_PORT = 9000
 
 GESTURES = ["Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up"]

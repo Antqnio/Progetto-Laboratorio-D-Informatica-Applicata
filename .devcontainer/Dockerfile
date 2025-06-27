@@ -15,9 +15,9 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements and install dependencies
-COPY requirements.lock .
-RUN pip install --no-cache-dir -r requirements.lock \ 
-    && rm -f requirements.lock
+COPY docker_client_requirements.lock .
+RUN pip install --no-cache-dir -r docker_client_requirements.lock \ 
+    && rm -f docker_client_requirements.lock
 
 # Copy and give execute permission to the start_client.sh script
 COPY start_client.sh .
