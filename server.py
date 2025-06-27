@@ -5,54 +5,68 @@ from ctypes import cast, POINTER
 from comtypes import CLSCTX_ALL
 import signal
 import sys
+import pythoncom
 
-def set_volume(change):
-    devices = AudioUtilities.GetSpeakers()
-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-    volume = cast(interface, POINTER(IAudioEndpointVolume))
-    current = volume.GetMasterVolumeLevelScalar()
-    new_volume = min(max(current + change, 0.0), 1.0)
-    volume.SetMasterVolumeLevelScalar(new_volume, None)
-    return new_volume
+import ctypes
+
+def simulate_volume_key(key, steps=3):
+    # key: 'up' o 'down'
+    VK_VOLUME_UP = 0xAF
+    VK_VOLUME_DOWN = 0xAE
+    if key == 'up':
+        vk = VK_VOLUME_UP
+    elif key == 'down':
+        vk = VK_VOLUME_DOWN
+    else:
+        return
+    for _ in range(steps):
+        ctypes.windll.user32.keybd_event(vk, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(vk, 0, 2, 0)
 
 def volume_up():
-    return set_volume(0.1)  # aumenta di 10%
+    simulate_volume_key('up') # aumenta di 10%
 
 def volume_down():
-    return set_volume(-0.1) # diminuisce di 10%
+    simulate_volume_key('down') # diminuisce di 10%
 
-HOST = '172.20.112.1'  # listen on all network interfaces
+HOST = '0.0.0.0'  # listen on all network interfaces
 PORT = 9000       # port exposed by the container
 
 def handle_client(conn, addr):
+    pythoncom.CoInitialize()  # Initialize COM for the current thread
     print(f"[INFO] Connection from {addr}")
-    with conn:
-        while True:
-            data = conn.recv(1024)       # read up to 1024 bytes
-            if not data:
-                # client has closed the connection
-                print(f"[INFO] Connection closed by {addr}")
-                break
+    try:
+        with conn:
+            while True:
+                data = conn.recv(1024)       # read up to 1024 bytes
+                """
+                if not data:
+                    # client has closed the connection
+                    print(f"[INFO] Connection closed by {addr}")
+                    break
+                """
+                # decode bytes into a UTF-8 string
+                try:
+                    message = data.decode('utf-8')
+                except UnicodeDecodeError:
+                    print(f"[ERROR] Failed to decode data from {addr}")
+                    continue
 
-            # decode bytes into a UTF-8 string
-            try:
-                message = data.decode('utf-8')
-            except UnicodeDecodeError:
-                print(f"[ERROR] Failed to decode data from {addr}")
-                continue
-
-            # process the received string
-            print(f"[RECEIVED] {message}")
-            
-            # Esegui azioni in base al messaggio ricevuto
-            if message.lower() == "Volume_Up":
-                vol = volume_up()
-                response = f"Volume increased to {int(vol*100)}%"
-            elif message.lower() == "volume down":
-                vol = volume_down()
-                response = f"Volume decreased to {int(vol*100)}%"
-            # else:
-
+                # process the received string
+                if message is not None and message not in ["", " "]:
+                    # Log the received message
+                    print(f"[RECEIVED] {message}")
+                
+                # Esegui azioni in base al messaggio ricevuto
+                if message == "Volume_Up":
+                    volume_up()
+                    response = "Volume increased"
+                elif message == "Volume_Down":
+                    volume_down()
+                    response = "Volume decreased"
+                # else:
+    finally:
+        pythoncom.CoUninitialize()  # De-initialize COM per evitare errori di access violation
     # end handle_client
 
 def main():
