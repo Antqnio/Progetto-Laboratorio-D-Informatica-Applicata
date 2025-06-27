@@ -1,10 +1,5 @@
 import socket
 import threading
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-from ctypes import cast, POINTER
-from comtypes import CLSCTX_ALL
-import signal
-import sys
 import pythoncom
 
 import ctypes
