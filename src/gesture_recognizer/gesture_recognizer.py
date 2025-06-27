@@ -8,7 +8,7 @@ from app.app import send_result
 
 # Create a gesture recognizer instance with the live stream mode:
 
-def start_gesture_recognition():
+def start_gesture_recognition(gesture_to_command: dict):
     """
     Starts the gesture recognizer using MediaPipe.
     This function initializes the gesture recognizer and starts capturing video from the webcam.
@@ -37,7 +37,7 @@ def start_gesture_recognition():
                 # print(classification.category_name)
                 if classification.category_name is not None:
                     # Send the recognized gesture to the server:
-                    send_result(classification.category_name)
+                    send_result(classification.category_name, gesture_to_command=gesture_to_command)
         # If there are no gestures recognized, print a message:
         if not result.gestures:
             print("No gesture recognized")

@@ -36,22 +36,24 @@ app = Flask(
 SERVER_IP = get_windows_host_ip()  # IP del server TCP su Windows
 SERVER_PORT = 9000
 
-GESTURES = ["Thumbs Up", "Thumbs Down", "Open Palm", "Closed Fist", "Victory", "Gang", "Pointing Up"]
+GESTURES = ["Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up"]
+COMMANDS = ["Volume_Up", "Volume_Down", "Open_Calculator", "Open_Chrome", "Take_Screenshot"]
 gesture_to_command = {}
 recognition_active = False
 
 # Create a gesture recognizer instance with the live stream mode:
-def send_result(result: str):
+def send_result(result: str, gesture_to_command: dict):
     print(f"[INFO] Riconosciuto gesto: {result}")
-    
-    """
+    print(f"[INFO] Mappatura gesto: {gesture_to_command}")
     comando = gesture_to_command.get(result)
-    if comando:
+    if comando in COMMANDS:
         print(f"[INFO] Invio comando associato: {comando}")
         invia_comando_al_server(comando)
-    """
+    
 
 def invia_comando_al_server(comando: str):
+    print(f"[INFO] ip server: {SERVER_IP}, porta: {SERVER_PORT}")
+    print(f"[INFO] Invio comando al server: {comando}")
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((SERVER_IP, SERVER_PORT))
@@ -64,12 +66,18 @@ def invia_comando_al_server(comando: str):
 def index():
     global gesture_to_command
     if request.method == "POST":
+        print("[DEBUG] Ricevuto POST con dati:", request.form)
         for gesture in GESTURES:
             command = request.form.get(gesture)
-            if command is not None:
+            print(f"[DEBUG] Gesto: {gesture}, Comando selezionato: {command}")
+            if command:  # Solo se è stato selezionato un comando valido
                 gesture_to_command[gesture] = command
+            elif gesture in gesture_to_command:
+                # Se l'utente seleziona "-- Nessun comando --", rimuovi l'associazione
+                del gesture_to_command[gesture]
+            print(f"[DEBUG] Mappatura aggiornata: {gesture_to_command}")
         return redirect(url_for("index"))
-    return render_template("index.html", gestures=GESTURES, mappings=gesture_to_command, active=recognition_active)
+    return render_template("index.html", gestures=GESTURES, commands=COMMANDS, mappings=gesture_to_command, active=recognition_active)
 
 @app.route("/start")
 def start_recognition():
@@ -77,7 +85,7 @@ def start_recognition():
     global recognition_active
     if not recognition_active:
         recognition_active = True
-        threading.Thread(target=start_gesture_recognition, daemon=True).start()
+        threading.Thread(target=start_gesture_recognition, args=(gesture_to_command,), daemon=True).start()
     return redirect(url_for("index"))
 
 @app.route("/stop")

@@ -10,7 +10,12 @@
         {% for gesture in gestures %}
         <div>
             <label for="{{ gesture }}">{{ gesture }}</label>
-            <input type="text" id="{{ gesture }}" name="{{ gesture }}" value="{{ mappings.get(gesture, '') }}">
+            <select id="{{ gesture }}" name="{{ gesture }}">
+                <option value="">-- Nessun comando --</option>
+                {% for command in commands %}
+                <option value="{{ command }}" {% if mappings.get(gesture, '') == command %}selected{% endif %}>{{ command }}</option>
+                {% endfor %}
+            </select>
         </div>
         {% endfor %}
         <button type="submit">Salva Associazioni</button>
