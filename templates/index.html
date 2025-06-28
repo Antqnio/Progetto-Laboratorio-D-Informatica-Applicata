@@ -1,14 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Associa Gesti a Comandi</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+        h1, h2 { text-align: center; }
+        .gesture-row { display: flex; align-items: center; margin-bottom: 10px; }
+        .gesture-row label { flex: 1; }
+        .gesture-row select { flex: 2; padding: 5px; }
+        .config-section { margin: 20px 0; display: flex; align-items: center; }
+        .config-section input, .config-section select { margin-right: 10px; padding: 5px; }
+        .buttons { margin-top: 20px; text-align: center; }
+        .buttons button { margin: 0 10px; padding: 10px 20px; }
+    </style>
 </head>
 <body>
     <h1>Associa Gesti a Comandi</h1>
 
     <form method="POST">
+        <div class="config-section">
+            <input type="text" name="config_name" placeholder="Nome configurazione">
+            <select name="config_name">
+                <option value="">-- Scegli configurazione --</option>
+                {% for cfg in configs %}
+                <option value="{{ cfg }}">{{ cfg }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         {% for gesture in gestures %}
-        <div>
+        <div class="gesture-row">
             <label for="{{ gesture }}">{{ gesture }}</label>
             <select id="{{ gesture }}" name="{{ gesture }}">
                 <option value="">-- Nessun comando --</option>
@@ -18,20 +40,25 @@
             </select>
         </div>
         {% endfor %}
-        <button type="submit">Salva Associazioni</button>
+
+        <div class="buttons">
+            <button type="submit" name="action" value="apply">Applica</button>
+            <button type="submit" name="action" value="save">Salva</button>
+            <button type="submit" name="action" value="load">Carica</button>
+        </div>
     </form>
 
     <hr>
 
     <h2>Riconoscimento Gesti</h2>
     {% if active %}
-        <p style="color: green;">🟢 Attivo</p>
-        <form action="{{ url_for('stop_recognition') }}" method="get">
+        <p style="color: green; text-align: center;">🟢 Attivo</p>
+        <form action="{{ url_for('stop_recognition') }}" method="get" style="text-align: center;">
             <button type="submit">Ferma Riconoscimento</button>
         </form>
     {% else %}
-        <p style="color: red;">🔴 Inattivo</p>
-        <form action="{{ url_for('start_recognition') }}" method="get">
+        <p style="color: red; text-align: center;">🔴 Inattivo</p>
+        <form action="{{ url_for('start_recognition') }}" method="get" style="text-align: center;">
             <button type="submit">Avvia Riconoscimento</button>
         </form>
     {% endif %}

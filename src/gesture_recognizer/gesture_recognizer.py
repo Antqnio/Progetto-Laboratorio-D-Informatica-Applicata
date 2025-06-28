@@ -6,10 +6,11 @@ import time as tm
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from app.app import send_result 
+from threading import Event
 
 # Create a gesture recognizer instance with the live stream mode:
 
-def start_gesture_recognition(gesture_to_command: dict):
+def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Event):
     """
     Starts the gesture recognizer using MediaPipe.
     This function initializes the gesture recognizer and starts capturing video from the webcam.
@@ -67,7 +68,7 @@ def start_gesture_recognition(gesture_to_command: dict):
         print("Webcam aperta correttamente!")
         # Create a loop to read the latest frame from the camera using VideoCapture#read()
         last_exec = 0
-        while True:
+        while not stop_event.is_set():
             
             # Read a frame from the webcam.
             ret, frame = cap.read()

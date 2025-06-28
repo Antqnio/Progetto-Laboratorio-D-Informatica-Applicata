@@ -16,6 +16,8 @@
 		"-e", "DISPLAY=${localEnv:DISPLAY}",
 		// Mounts the X11 socket
 		"-v", "/tmp/.X11-unix:/tmp/.X11-unix",
+		// Mounts the local workspace folder to /app in the container
+		"-v", "${localWorkspaceFolder}/configs:/app/configs",
 		// (optional) If you have permission issues
 		"--privileged"
 	],
