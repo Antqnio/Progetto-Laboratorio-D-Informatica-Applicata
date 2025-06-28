@@ -3,14 +3,13 @@ import mediapipe as mp
 import numpy as np
 import os
 import time as tm
-import threading
+import multiprocessing
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# Variabile globale per esporre il frame alla Flask app
-last_frame = None
 
-def start_gesture_recognition(gesture_to_command: dict):
+
+def start_gesture_recognition(gesture_to_command: dict, queue: "multiprocessing.Queue" = None):
     """
     Starts the gesture recognizer using MediaPipe.
     This function initializes the gesture recognizer and starts capturing video from the webcam.
@@ -64,7 +63,7 @@ def start_gesture_recognition(gesture_to_command: dict):
                     tm.sleep(0.1)
                     continue
 
-                last_frame = frame.copy()
+                queue.put(frame.copy())
 
                 current_time = tm.time()
                 if current_time - last_exec >= 1.0:

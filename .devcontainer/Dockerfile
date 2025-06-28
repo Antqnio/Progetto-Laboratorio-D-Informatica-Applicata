@@ -34,7 +34,7 @@ COPY . .
 EXPOSE 9000
 
 # Define environment variable (if needed)
-ENV OPENCV_LOG_LEVEL=DEBUG
+# ENV OPENCV_LOG_LEVEL=DEBUG
 
 # Run app.py when the container launches
 CMD ["python", "app.py"]
