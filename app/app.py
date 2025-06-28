@@ -1,11 +1,12 @@
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, Response
 import socket
 import threading
 import subprocess
+import cv2
 import multiprocessing
-
+from src.gesture_recognizer import gesture_recognizer
 
 
 
@@ -146,6 +147,20 @@ def stop_recognition():
         print("[INFO] Gesture recognition process stopped.")
 
     return redirect(url_for("index"))
+
+@app.route("/video_feed")
+def video_feed():
+    def generate():
+        while recognition_active:
+            frame = gesture_recognizer.last_frame
+            if frame is None:
+                continue
+            ret, buffer = cv2.imencode(".jpg", frame)
+            if not ret:
+                continue
+            yield (b"--frame\r\n"
+                   b"Content-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n")
+    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 # Start the Flask app
 if __name__ == "__main__":

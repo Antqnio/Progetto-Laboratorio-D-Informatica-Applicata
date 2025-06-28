@@ -3,8 +3,12 @@ import mediapipe as mp
 import numpy as np
 import os
 import time as tm
+import threading
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+
+# Variabile globale per esporre il frame alla Flask app
+last_frame = None
 # Create a gesture recognizer instance with the live stream mode:
 
 def start_gesture_recognition(gesture_to_command: dict):
@@ -23,9 +27,8 @@ def start_gesture_recognition(gesture_to_command: dict):
     VisionRunningMode = mp.tasks.vision.RunningMode
 
 
-
     def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-        from app.app import send_result # Import the send_result function from the app module.
+        from app.app import send_result# Import the send_result function from the app module.
         #print('gesture recognition result: {}'.format(result.gestures))
         # result_gesture = result.gestures[0].categoryName if result.gestures else "No gesture recognized"
         # print(f"[INFO] Riconosciuto gesto: {result_gesture}")
@@ -43,10 +46,12 @@ def start_gesture_recognition(gesture_to_command: dict):
             print("No gesture recognized")
 
     options = GestureRecognizerOptions(
-        base_options = BaseOptions(model_asset_path=model_path),
+        base_options=BaseOptions(model_asset_path=model_path),
         running_mode=VisionRunningMode.LIVE_STREAM,
         result_callback=get_result,
-        num_hands=2)
+        num_hands=2
+    )
+
     with GestureRecognizer.create_from_options(options) as recognizer:
         # The detector is initialized. Use it here.
         # ...
@@ -61,26 +66,25 @@ def start_gesture_recognition(gesture_to_command: dict):
 
         if not cap.isOpened():
             print("Webcam non accessibile")
-            exit()
+            return
 
         print("Webcam aperta correttamente!")
         # Create a loop to read the latest frame from the camera using VideoCapture#read()
+
         try:
             last_exec = 0
+            global last_frame
             while True:
-                
+
                 # Read a frame from the webcam.
                 ret, frame = cap.read()
                 if not ret:
-                    tm.sleep(0.1)
+                    tm.sleep(0.1) 
                     continue # Or break if you want to stop on failure.
-                # Show the frame in a window using OpenCV’s imshow() function.
-                cv2.imshow("Webcam", frame)
-                
-                # Process the frame every second to avoid overloading the CPU and server.
+                last_frame = frame.copy()
+
                 current_time = tm.time()
                 if current_time - last_exec >= 1.0:
-                    
                     last_exec = current_time
                     # Convert the frame from OpenCV BGR format to RGB format.
                     # MediaPipe uses RGB format for image processing.
