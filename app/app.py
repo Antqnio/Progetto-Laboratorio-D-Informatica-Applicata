@@ -2,7 +2,6 @@ import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, Response
 import socket
-import threading
 import subprocess
 import cv2
 import multiprocessing
@@ -116,6 +115,7 @@ def index():
 
 
 recognition_process = None
+queue = None
 
 @app.route("/start")
 def start_recognition():
@@ -125,11 +125,13 @@ def start_recognition():
 
     if not recognition_active:
         recognition_active = True
-
+        # Initialize queue for inter-process communication
+        global queue
+        queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
         recognition_process = multiprocessing.Process(
             target=start_gesture_recognition,
-            args=(gesture_to_command,),
+            args=(gesture_to_command, queue,),
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
@@ -143,6 +145,9 @@ def stop_recognition():
     if recognition_process and recognition_process.is_alive():
         recognition_process.terminate()
         recognition_process.join()
+        global queue
+        queue.close()
+        queue.join_thread()
         recognition_process = None
         print("[INFO] Gesture recognition process stopped.")
 
@@ -152,7 +157,7 @@ def stop_recognition():
 def video_feed():
     def generate():
         while recognition_active:
-            frame = gesture_recognizer.last_frame
+            frame = queue.get() if queue else None
             if frame is None:
                 continue
             ret, buffer = cv2.imencode(".jpg", frame)
