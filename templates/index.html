@@ -66,5 +66,9 @@
             <button type="submit">Avvia Riconoscimento</button>
         </form>
     {% endif %}
+
+    <h2>Webcam Live</h2>
+    <img src="{{ url_for('video_feed') }}" width="640" height="480">
+
 </body>
 </html>
