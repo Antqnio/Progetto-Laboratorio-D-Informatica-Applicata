@@ -114,23 +114,36 @@ def index():
 
 # Start gesture recognition
 stop_event = Event()
+recognition_thread = None
 
 @app.route("/start")
 def start_recognition():
     from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
-    global recognition_active, stop_event
+    global recognition_active, stop_event, recognition_thread
     if not recognition_active:
         recognition_active = True
         stop_event.clear()
-        threading.Thread(target=start_gesture_recognition, args=(gesture_to_command, stop_event,), daemon=True).start()
+        print("[INFO] Starting gesture recognition...")
+        # Aspetta che il thread precedente sia terminato
+        if recognition_thread is not None and recognition_thread.is_alive():
+            recognition_thread.join(timeout=2)
+        recognition_thread = threading.Thread(
+            target=start_gesture_recognition,
+            args=(gesture_to_command, stop_event,),
+            daemon=True
+        )
+        recognition_thread.start()
     return redirect(url_for("index"))
 
-# Stop gesture recognition
 @app.route("/stop")
 def stop_recognition():
-    global recognition_active
+    global recognition_active, recognition_thread
     recognition_active = False
     stop_event.set()
+    # Aspetta che il thread finisca
+    if recognition_thread is not None and recognition_thread.is_alive():
+        recognition_thread.join(timeout=2)
+        recognition_thread = None
     return redirect(url_for("index"))
 
 # Start the Flask app
