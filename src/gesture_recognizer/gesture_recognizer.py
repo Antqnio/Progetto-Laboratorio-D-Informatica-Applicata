@@ -5,10 +5,9 @@ import os
 import time as tm
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-import threading
 # Create a gesture recognizer instance with the live stream mode:
 
-def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Event):
+def start_gesture_recognition(gesture_to_command: dict):
     """
     Starts the gesture recognizer using MediaPipe.
     This function initializes the gesture recognizer and starts capturing video from the webcam.
@@ -22,6 +21,7 @@ def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Ev
     GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
     GestureRecognizerResult = mp.tasks.vision.GestureRecognizerResult
     VisionRunningMode = mp.tasks.vision.RunningMode
+
 
 
     def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
@@ -72,6 +72,7 @@ def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Ev
                 # Read a frame from the webcam.
                 ret, frame = cap.read()
                 if not ret:
+                    tm.sleep(0.1)
                     continue # Or break if you want to stop on failure.
                 # Show the frame in a window using OpenCV’s imshow() function.
                 cv2.imshow("Webcam", frame)
@@ -96,8 +97,9 @@ def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Ev
                     recognizer.recognize_async(mp_image, frame_timestamp_ms)
                 
                 # Break the loop and release the webcam if the user presses the 'q' key.
-                if stop_event.is_set() or (cv2.waitKey(1) & 0xFF == ord('q')):
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         finally:
             cap.release()
+            tm.sleep(0.1)
             cv2.destroyAllWindows()
