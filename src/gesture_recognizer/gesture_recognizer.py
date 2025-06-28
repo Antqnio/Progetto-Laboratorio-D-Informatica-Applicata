@@ -5,9 +5,7 @@ import os
 import time as tm
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from app.app import send_result 
-from threading import Event
-
+import threading
 # Create a gesture recognizer instance with the live stream mode:
 
 def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Event):
@@ -27,7 +25,7 @@ def start_gesture_recognition(gesture_to_command: dict, stop_event: threading.Ev
 
 
     def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-        
+        from app.app import send_result # Import the send_result function from the app module.
         #print('gesture recognition result: {}'.format(result.gestures))
         # result_gesture = result.gestures[0].categoryName if result.gestures else "No gesture recognized"
         # print(f"[INFO] Riconosciuto gesto: {result_gesture}")

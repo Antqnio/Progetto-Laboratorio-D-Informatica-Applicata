@@ -1,19 +1,10 @@
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Associa Gesti a Comandi</title>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-        h1, h2 { text-align: center; }
-        .gesture-row { display: flex; align-items: center; margin-bottom: 10px; }
-        .gesture-row label { flex: 1; }
-        .gesture-row select { flex: 2; padding: 5px; }
-        .config-section { margin: 20px 0; display: flex; align-items: center; }
-        .config-section input, .config-section select { margin-right: 10px; padding: 5px; }
-        .buttons { margin-top: 20px; text-align: center; }
-        .buttons button { margin: 0 10px; padding: 10px 20px; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <h1>Associa Gesti a Comandi</h1>
@@ -31,7 +22,20 @@
 
         {% for gesture in gestures %}
         <div class="gesture-row">
-            <label for="{{ gesture }}">{{ gesture }}</label>
+            <label class="gesture-label" for="{{ gesture }}">
+                <span class="gesture-icon">
+                    {% if gesture == "Thumb_Up" %}👍
+                    {% elif gesture == "Thumb_Down" %}👎
+                    {% elif gesture == "Open_Palm" %}🖐️
+                    {% elif gesture == "Closed_Fist" %}✊
+                    {% elif gesture == "Victory" %}✌️
+                    {% elif gesture == "ILoveYou" %}🤟
+                    {% elif gesture == "Pointing_Up" %}👆
+                    {% else %}❓
+                    {% endif %}
+                </span>
+                {{ gesture.replace('_', ' ').title() }}
+            </label>
             <select id="{{ gesture }}" name="{{ gesture }}">
                 <option value="">-- Nessun comando --</option>
                 {% for command in commands %}
