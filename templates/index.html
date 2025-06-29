@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Gesture Recognizer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script></head>
 <body>
     <h1>Bind Gestures to Commands</h1>
     <div class="main-layout">
@@ -13,7 +13,7 @@
             <form method="POST" id="configForm">
                 <div class="config-section">
                     <input type="text" name="config_name_text" placeholder="Configuration Name" value="{{ selected_config }}">
-                    <select name="config_name_select" onchange="document.getElementById('configForm').submit();">
+                    <select id="config_name_select" name="config_name_select">
                         <option value="">-- Select Configuration --</option>
                         {% for cfg in configs %}
                         <option value="{{ cfg }}" {% if selected_config == cfg %}selected{% endif %}>{{ cfg }}</option>
