@@ -75,10 +75,17 @@ def index():
 
     if request.method == "POST":
         action = request.form.get("action")
-
-        # Apply changes from the form
         if action == "apply":
-            print("[INFO] Applying changes from the form")
+            # Aggiorna gesture_to_command ma NON salva su file
+            for gesture in GESTURES:
+                command = request.form.get(gesture)
+                if command:
+                    gesture_to_command[gesture] = command
+                elif gesture in gesture_to_command:
+                    del gesture_to_command[gesture]
+            return redirect(url_for("index"))
+        elif action == "save":
+            # Aggiorna gesture_to_command e salva su file
             for gesture in GESTURES:
                 print(f"[INFO] Processing gesture: {gesture}")
                 command = request.form.get(gesture)
@@ -86,24 +93,30 @@ def index():
                     gesture_to_command[gesture] = command
                 elif gesture in gesture_to_command:
                     del gesture_to_command[gesture]
-
-        # Save configuration to file
-        elif action == "save":
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
-
-        # Load configuration from file
-        elif action == "load":
+            return redirect(url_for("index"))
+        else:
+            # Carica la configurazione selezionata
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 if os.path.exists(path):
                     with open(path, "r") as f:
-                        gesture_to_command = json.load(f)
+                        gesture_to_command.clear()
+                        gesture_to_command.update(json.load(f))
+            return render_template(
+                "index.html",
+                gestures=GESTURES,
+                commands=COMMANDS,
+                mappings=gesture_to_command,
+                active=recognition_active,
+                configs=config_files,
+                selected_config=selected_config
+            )
 
-        return redirect(url_for("index"))
-
+    # GET o prima apertura
     return render_template(
         "index.html",
         gestures=GESTURES,

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,10 +10,10 @@
     <div class="main-layout">
         <div class="left-panel">
 
-            <form method="POST">
+            <form method="POST" id="configForm">
                 <div class="config-section">
-                    <input type="text" name="config_name_text" placeholder="Configuration Name">
-                    <select name="config_name_select">
+                    <input type="text" name="config_name_text" placeholder="Configuration Name" value="{{ selected_config }}">
+                    <select name="config_name_select" onchange="document.getElementById('configForm').submit();">
                         <option value="">-- Select Configuration --</option>
                         {% for cfg in configs %}
                         <option value="{{ cfg }}" {% if selected_config == cfg %}selected{% endif %}>{{ cfg }}</option>
@@ -50,7 +49,6 @@
                 <div class="buttons">
                     <button type="submit" name="action" value="apply">Apply</button>
                     <button type="submit" name="action" value="save">Save</button>
-                    <button type="submit" name="action" value="load">Load</button>
                 </div>
             </form>
             <hr>
