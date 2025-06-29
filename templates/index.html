@@ -1,74 +1,77 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Associa Gesti a Comandi</title>
+    <title>Gesture Recognizer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Associa Gesti a Comandi</h1>
+    <h1>Bind Gestures to Commands</h1>
+    <div class="main-layout">
+        <div class="left-panel">
 
-    <form method="POST">
-        <div class="config-section">
-            <input type="text" name="config_name" placeholder="Nome configurazione">
-            <select name="config_name">
-                <option value="">-- Scegli configurazione --</option>
-                {% for cfg in configs %}
-                <option value="{{ cfg }}">{{ cfg }}</option>
+            <form method="POST">
+                <div class="config-section">
+                    <input type="text" name="config_name" placeholder="Configution Name">
+                    <select name="config_name">
+                        <option value="">-- Select Configuration --</option>
+                        {% for cfg in configs %}
+                        <option value="{{ cfg }}">{{ cfg }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {% for gesture in gestures %}
+                <div class="gesture-row">
+                    <label class="gesture-label" for="{{ gesture }}">
+                        <span class="gesture-icon">
+                            {% if gesture == "Thumb_Up" %}👍
+                            {% elif gesture == "Thumb_Down" %}👎
+                            {% elif gesture == "Open_Palm" %}🖐️
+                            {% elif gesture == "Closed_Fist" %}✊
+                            {% elif gesture == "Victory" %}✌️
+                            {% elif gesture == "ILoveYou" %}🤟
+                            {% elif gesture == "Pointing_Up" %}👆
+                            {% else %}❓
+                            {% endif %}
+                        </span>
+                        {{ gesture.replace('_', ' ').title() }}
+                    </label>
+                    <select id="{{ gesture }}" name="{{ gesture }}">
+                        <option value="">-- No Command --</option>
+                        {% for command in commands %}
+                        <option value="{{ command }}" {% if mappings.get(gesture, '') == command %}selected{% endif %}>{{ command }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 {% endfor %}
-            </select>
+
+                <div class="buttons">
+                    <button type="submit" name="action" value="apply">Apply</button>
+                    <button type="submit" name="action" value="save">Save</button>
+                    <button type="submit" name="action" value="load">Load</button>
+                </div>
+            </form>
+            <hr>
+
+            <h2>Gesture Recognizer</h2>
+            {% if active %}
+                <p style="color: green; text-align: center;">🟢 Active</p>
+                <form action="{{ url_for('stop_recognition') }}" method="get" style="text-align: center;">
+                    <button type="submit">Stop Recognition</button>
+                </form>
+            {% else %}
+                <p style="color: red; text-align: center;">🔴 Inactive</p>
+                <form action="{{ url_for('start_recognition') }}" method="get" style="text-align: center;">
+                    <button type="submit">Start Recognition</button>
+                </form>
+            {% endif %}
+        </div>    
+        <div class="right-panel">
+            <h2>Webcam Live</h2>
+            <img src="{{ url_for('video_feed') }}" width="640" height="480">
         </div>
-
-        {% for gesture in gestures %}
-        <div class="gesture-row">
-            <label class="gesture-label" for="{{ gesture }}">
-                <span class="gesture-icon">
-                    {% if gesture == "Thumb_Up" %}👍
-                    {% elif gesture == "Thumb_Down" %}👎
-                    {% elif gesture == "Open_Palm" %}🖐️
-                    {% elif gesture == "Closed_Fist" %}✊
-                    {% elif gesture == "Victory" %}✌️
-                    {% elif gesture == "ILoveYou" %}🤟
-                    {% elif gesture == "Pointing_Up" %}👆
-                    {% else %}❓
-                    {% endif %}
-                </span>
-                {{ gesture.replace('_', ' ').title() }}
-            </label>
-            <select id="{{ gesture }}" name="{{ gesture }}">
-                <option value="">-- Nessun comando --</option>
-                {% for command in commands %}
-                <option value="{{ command }}" {% if mappings.get(gesture, '') == command %}selected{% endif %}>{{ command }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        {% endfor %}
-
-        <div class="buttons">
-            <button type="submit" name="action" value="apply">Applica</button>
-            <button type="submit" name="action" value="save">Salva</button>
-            <button type="submit" name="action" value="load">Carica</button>
-        </div>
-    </form>
-
-    <hr>
-
-    <h2>Riconoscimento Gesti</h2>
-    {% if active %}
-        <p style="color: green; text-align: center;">🟢 Attivo</p>
-        <form action="{{ url_for('stop_recognition') }}" method="get" style="text-align: center;">
-            <button type="submit">Ferma Riconoscimento</button>
-        </form>
-    {% else %}
-        <p style="color: red; text-align: center;">🔴 Inattivo</p>
-        <form action="{{ url_for('start_recognition') }}" method="get" style="text-align: center;">
-            <button type="submit">Avvia Riconoscimento</button>
-        </form>
-    {% endif %}
-
-    <h2>Webcam Live</h2>
-    <img src="{{ url_for('video_feed') }}" width="640" height="480">
-
+    </div>
 </body>
 </html>

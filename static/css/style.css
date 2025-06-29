@@ -91,3 +91,33 @@ button:hover,
 .buttons button:hover {
     background-color: #0056b3;
 }
+
+/* Layout a due colonne */
+.main-layout {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 40px;
+}
+
+/* Colonna sinistra: associazione gesti */
+.left-panel {
+    flex: 1.2;
+    min-width: 320px;
+}
+
+/* Colonna destra: webcam */
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.right-panel img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px #0001;
+    margin-top: 10px;
+}

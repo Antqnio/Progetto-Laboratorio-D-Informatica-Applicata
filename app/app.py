@@ -77,8 +77,10 @@ def index():
         action = request.form.get("action")
 
         # Apply changes from the form
-        if action == "Applica":
+        if action == "Apply":
+            print("[INFO] Applying changes from the form")
             for gesture in GESTURES:
+                print(f"[INFO] Processing gesture: {gesture}")
                 command = request.form.get(gesture)
                 if command:
                     gesture_to_command[gesture] = command
@@ -86,14 +88,14 @@ def index():
                     del gesture_to_command[gesture]
 
         # Save configuration to file
-        elif action == "Salva":
+        elif action == "Save":
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
 
         # Load configuration from file
-        elif action == "Carica":
+        elif action == "Load":
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 if os.path.exists(path):
