@@ -78,28 +78,36 @@ function init() {
     const statusElem = document.getElementById("recognition-status");
     const startBtn = document.getElementById("start-recognition-btn");
     const stopBtn = document.getElementById("stop-recognition-btn");
+    const videoElem = document.getElementById("webcam-frame"); // Assicurati che l'img abbia questo id
     console.log("stopBtn", stopBtn);
-    if (startBtn && stopBtn) {
-        startBtn.addEventListener("click", async function() {
+    if (startBtn && stopBtn && videoElem) {
+        startBtn.addEventListener("click", async function(e) {
+            e.preventDefault();  // <- blocca qualsiasi submit/navigation
             const resp = await fetch("/start");
             if (resp.ok) {
                 console.log("sono qui verde")
                 statusElem.textContent = "🟢 Active";
                 statusElem.style.color = "green";
                 startBtn.style.display = "none";stopBtn.style.display = "inline-block";
+                videoElem.style.display = "block";
+                videoElem.src = "/video_feed?ts=" + Date.now();
             }
         });
         
         console.log("Inizializzazione del bottone di stop");
-        stopBtn.addEventListener("click", async function() {
+        stopBtn.addEventListener("click", async function(e) {
+            e.preventDefault();  // <- blocca qualsiasi submit/navigation
             console.log("sono qui rosso")
             const resp = await fetch("/stop");
+            console.log("Sono qui 2")
             console.log("Response status:", resp.status, resp.statusText);
             if (resp.ok) {
                 statusElem.textContent = "🔴 Inactive";
                 statusElem.style.color = "red";
                 stopBtn.style.display = "none";
                 startBtn.style.display = "inline-block";
+                videoElem.style.display = "none";
+                videoElem.src = "";
             }
         });
     }

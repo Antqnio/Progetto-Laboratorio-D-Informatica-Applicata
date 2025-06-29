@@ -160,10 +160,10 @@ def start_recognition():
 def stop_recognition():
     global recognition_active, recognition_process
     recognition_active = False
-
     if recognition_process and recognition_process.is_alive():
         recognition_process.terminate()
-        recognition_process.join()
+        #recognition_process.join()
+        print("Stopping recognition...")
         global queue
         queue.close()
         queue.join_thread()
@@ -175,6 +175,7 @@ def stop_recognition():
 @app.route("/video_feed")
 def video_feed():
     def generate():
+        print("[INFO] Starting video feed...")
         while recognition_active:
             print("Sono qui")
             frame = queue.get() if queue else None
@@ -189,4 +190,4 @@ def video_feed():
 
 # Start the Flask app
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)

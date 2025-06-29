@@ -59,17 +59,17 @@
             </p>
             <div style="text-align: center;">
                 {% if active %}
-                    <button id="stop-recognition-btn">Stop Recognition</button>
-                    <button id="start-recognition-btn" style="display: none;">Start Recognition</button>
+                    <button id="stop-recognition-btn" type="button">Stop Recognition</button>
+                    <button id="start-recognition-btn" type="button" style="display: none;">Start Recognition</button>
                 {% else %}
-                    <button id="stop-recognition-btn" style="display: none;">Stop Recognition</button>
-                    <button id="start-recognition-btn">Start Recognition</button>
+                    <button id="stop-recognition-btn" type="button" style="display: none;">Stop Recognition</button>
+                    <button id="start-recognition-btn" type="button">Start Recognition</button>
                 {% endif %}
             </div>
         </div>    
         <div class="right-panel">
             <h2>Webcam Live</h2>
-            <img src="{{ url_for('video_feed') }}" width="640" height="480">
+            <img id="webcam-frame" src="{{ url_for('video_feed') }}" width="640" height="480">
             <p id="message"></p>
         </div>
     </div>
