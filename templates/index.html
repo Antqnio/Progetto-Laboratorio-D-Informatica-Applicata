@@ -13,11 +13,11 @@
 
             <form method="POST">
                 <div class="config-section">
-                    <input type="text" name="config_name" placeholder="Configution Name">
-                    <select name="config_name">
+                    <input type="text" name="config_name_text" placeholder="Configuration Name">
+                    <select name="config_name_select">
                         <option value="">-- Select Configuration --</option>
                         {% for cfg in configs %}
-                        <option value="{{ cfg }}">{{ cfg }}</option>
+                        <option value="{{ cfg }}" {% if selected_config == cfg %}selected{% endif %}>{{ cfg }}</option>
                         {% endfor %}
                     </select>
                 </div>

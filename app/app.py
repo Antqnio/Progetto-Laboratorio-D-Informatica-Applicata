@@ -71,7 +71,7 @@ def index():
 
     # List of available configuration files (without .json extension)
     config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
-    selected_config = request.form.get("config_name", "")
+    selected_config = request.form.get("config_name_select") or request.form.get("config_name_text", "")
 
     if request.method == "POST":
         action = request.form.get("action")
