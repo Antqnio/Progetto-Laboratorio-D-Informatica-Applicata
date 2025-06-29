@@ -33,7 +33,7 @@ SERVER_PORT = 9000
 
 # List of available gestures and commands
 GESTURES = ["Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up"]
-COMMANDS = ["Volume_Up", "Volume_Down", "Open_Calculator", "Open_Chrome", "Take_Screenshot"]
+COMMANDS = ["Volume Up", "Volume Down", "Open Calculator", "Open Chrome", "Take Screenshot"]
 
 # Gesture-command mapping
 gesture_to_command = {}
@@ -77,7 +77,7 @@ def index():
         action = request.form.get("action")
 
         # Apply changes from the form
-        if action == "Apply":
+        if action == "apply":
             print("[INFO] Applying changes from the form")
             for gesture in GESTURES:
                 print(f"[INFO] Processing gesture: {gesture}")
@@ -88,14 +88,14 @@ def index():
                     del gesture_to_command[gesture]
 
         # Save configuration to file
-        elif action == "Save":
+        elif action == "save":
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
 
         # Load configuration from file
-        elif action == "Load":
+        elif action == "load":
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 if os.path.exists(path):
