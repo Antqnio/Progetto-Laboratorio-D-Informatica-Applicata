@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y \
 # Set the working directory
 WORKDIR /app
 
+
+# Declare a volume for gesture configurations
+VOLUME ["/app/configs"]
+
 # Copy requirements and install dependencies
 COPY docker_client_requirements.lock .
 RUN pip install --no-cache-dir -r docker_client_requirements.lock \ 
