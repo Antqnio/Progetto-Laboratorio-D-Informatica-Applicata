@@ -54,17 +54,18 @@
             <hr>
 
             <h2>Gesture Recognizer</h2>
-            {% if active %}
-                <p style="color: green; text-align: center;">🟢 Active</p>
-                <form action="{{ url_for('stop_recognition') }}" method="get" style="text-align: center;">
-                    <button type="submit">Stop Recognition</button>
-                </form>
-            {% else %}
-                <p style="color: red; text-align: center;">🔴 Inactive</p>
-                <form action="{{ url_for('start_recognition') }}" method="get" style="text-align: center;">
-                    <button type="submit">Start Recognition</button>
-                </form>
-            {% endif %}
+            <p id="recognition-status" style="text-align: center; color: {{ 'green' if active else 'red' }};">
+                {% if active %}🟢 Active{% else %}🔴 Inactive{% endif %}
+            </p>
+            <div style="text-align: center;">
+                {% if active %}
+                    <button id="stop-recognition-btn">Stop Recognition</button>
+                    <button id="start-recognition-btn" style="display: none;">Start Recognition</button>
+                {% else %}
+                    <button id="stop-recognition-btn" style="display: none;">Stop Recognition</button>
+                    <button id="start-recognition-btn">Start Recognition</button>
+                {% endif %}
+            </div>
         </div>    
         <div class="right-panel">
             <h2>Webcam Live</h2>

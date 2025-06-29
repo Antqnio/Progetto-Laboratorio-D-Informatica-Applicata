@@ -75,6 +75,35 @@ function init() {
     
     }
 
+    const statusElem = document.getElementById("recognition-status");
+    const startBtn = document.getElementById("start-recognition-btn");
+    const stopBtn = document.getElementById("stop-recognition-btn");
+    console.log("stopBtn", stopBtn);
+    if (startBtn && stopBtn) {
+        startBtn.addEventListener("click", async function() {
+            const resp = await fetch("/start");
+            if (resp.ok) {
+                console.log("sono qui verde")
+                statusElem.textContent = "🟢 Active";
+                statusElem.style.color = "green";
+                startBtn.style.display = "none";stopBtn.style.display = "inline-block";
+            }
+        });
+        
+        console.log("Inizializzazione del bottone di stop");
+        stopBtn.addEventListener("click", async function() {
+            console.log("sono qui rosso")
+            const resp = await fetch("/stop");
+            console.log("Response status:", resp.status, resp.statusText);
+            if (resp.ok) {
+                statusElem.textContent = "🔴 Inactive";
+                statusElem.style.color = "red";
+                stopBtn.style.display = "none";
+                startBtn.style.display = "inline-block";
+            }
+        });
+    }
+
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -154,7 +154,7 @@ def start_recognition():
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
-    return redirect(url_for("index"))
+    return jsonify({"status": "ok", "active": True})
 
 @app.route("/stop")
 def stop_recognition():
@@ -170,12 +170,13 @@ def stop_recognition():
         recognition_process = None
         print("[INFO] Gesture recognition process stopped.")
 
-    return redirect(url_for("index"))
+    return jsonify({"status": "ok", "active": False})
 
 @app.route("/video_feed")
 def video_feed():
     def generate():
         while recognition_active:
+            print("Sono qui")
             frame = queue.get() if queue else None
             if frame is None:
                 continue
