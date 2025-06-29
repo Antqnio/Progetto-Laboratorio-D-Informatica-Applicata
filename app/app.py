@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, Response
+from flask import Flask, render_template, request, redirect, url_for, Response, jsonify
 import socket
 import subprocess
 import cv2
@@ -42,7 +42,7 @@ gesture_to_command = {}
 recognition_active = False
 
 # Directory to store configuration files
-CONFIG_DIR = os.path.join(os.path.dirname(__file__), "configs")
+CONFIG_DIR = os.path.join(os.path.dirname(__file__), "../static/configs")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
 # Send recognized result to the TCP server
@@ -83,21 +83,25 @@ def index():
                     gesture_to_command[gesture] = command
                 elif gesture in gesture_to_command:
                     del gesture_to_command[gesture]
-            return redirect(url_for("index"))
+            return jsonify({"status": "ok", "message": "Configurazione applicata!"})
         elif action == "save":
             # Aggiorna gesture_to_command e salva su file
             for gesture in GESTURES:
                 print(f"[INFO] Processing gesture: {gesture}")
                 command = request.form.get(gesture)
-                if command:
-                    gesture_to_command[gesture] = command
-                elif gesture in gesture_to_command:
-                    del gesture_to_command[gesture]
+                print(f"[INFO] Associated command: {command}")
+                gesture_to_command[gesture] = command
+                #if command:
+                #    gesture_to_command[gesture] = command
+                #elif gesture in gesture_to_command:
+                #    del gesture_to_command[gesture]
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
-            return redirect(url_for("index"))
+                return jsonify({"status": "ok", "message": "Configurazione salvata!"})
+            else:
+                return jsonify({"status": "error", "message": "Nessun nome configurazione selezionato."}, 400)
         else:
             # Carica la configurazione selezionata
             if selected_config:

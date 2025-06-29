@@ -38,7 +38,7 @@
                         {{ gesture.replace('_', ' ').title() }}
                     </label>
                     <select id="{{ gesture }}" name="{{ gesture }}">
-                        <option value="">-- No Command --</option>
+                        <option value="-- No Command --">-- No Command --</option>
                         {% for command in commands %}
                         <option value="{{ command }}" {% if mappings.get(gesture, '') == command %}selected{% endif %}>{{ command }}</option>
                         {% endfor %}
@@ -69,6 +69,7 @@
         <div class="right-panel">
             <h2>Webcam Live</h2>
             <img src="{{ url_for('video_feed') }}" width="640" height="480">
+            <p id="message"></p>
         </div>
     </div>
 </body>

@@ -7,7 +7,7 @@ import multiprocessing
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-
+#RECOGNITION_INTERVAL = 0.1  # seconds, adjust as needed
 
 def start_gesture_recognition(gesture_to_command: dict, queue: "multiprocessing.Queue" = None):
     """
@@ -70,6 +70,8 @@ def start_gesture_recognition(gesture_to_command: dict, queue: "multiprocessing.
         print("Webcam aperta correttamente!")
         # Create a loop to read the latest frame from the camera using VideoCapture#read()
 
+        
+
         try:
             last_exec = 0
             global last_frame
@@ -83,22 +85,22 @@ def start_gesture_recognition(gesture_to_command: dict, queue: "multiprocessing.
 
                 queue.put(frame.copy())
 
-                current_time = tm.time()
-                if current_time - last_exec >= 1.0:
-                    last_exec = current_time
-                    # Convert the frame from OpenCV BGR format to RGB format.
-                    # MediaPipe uses RGB format for image processing.
-                    # OpenCV uses BGR format by default.
-                    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    # Convert the frame from OpenCV to a numpy array.
-                    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-                    
-                    # Send live image data to perform gesture recognition.
-                    # The results are accessible via the `result_callback` provided in
-                    # the `GestureRecognizerOptions` object.
-                    # The gesture recognizer must be created with the live stream mode.
-                    frame_timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
-                    recognizer.recognize_async(mp_image, frame_timestamp_ms)
+                #current_time = tm.time()
+                #if current_time - last_exec >= RECOGNITION_INTERVAL:
+                #    last_exec = current_time
+                # Convert the frame from OpenCV BGR format to RGB format.
+                # MediaPipe uses RGB format for image processing.
+                # OpenCV uses BGR format by default.
+                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                # Convert the frame from OpenCV to a numpy array.
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+                
+                # Send live image data to perform gesture recognition.
+                # The results are accessible via the `result_callback` provided in
+                # the `GestureRecognizerOptions` object.
+                # The gesture recognizer must be created with the live stream mode.
+                frame_timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
+                recognizer.recognize_async(mp_image, frame_timestamp_ms)
                 
                 # Break the loop and release the webcam if the user presses the 'q' key.
                 if cv2.waitKey(1) & 0xFF == ord('q'):
