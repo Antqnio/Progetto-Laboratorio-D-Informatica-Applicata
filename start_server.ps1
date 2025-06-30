@@ -9,7 +9,7 @@ if (!(Test-Path ".venv")) {
 . .\.venv\Scripts\Activate.ps1
 
 # Install dependencies
-uv pip install -r server_requirements.txt
+uv pip install -r .\server\server_requirements.txt
 
 # Run server.py in the same terminal
-python .\server.py
+python .\server\server.py
