@@ -27,13 +27,17 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
     VisionRunningMode = mp.tasks.vision.RunningMode
 
     print("[INFO] gesture_to_command: {}".format(gesture_to_command))
-
+    
+    counter = 0
 
     def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
         #print('gesture recognition result: {}'.format(result.gestures))
         # result_gesture = result.gestures[0].categoryName if result.gestures else "No gesture recognized"
         # print(f"[INFO] Riconosciuto gesto: {result_gesture}")
-        
+        nonlocal counter
+        counter += 1
+        if counter % 10 != 0:
+            return
         #send_result(result_gesture)
         # Print all recognized category_names:
         for gesture_list in result.gestures:
