@@ -1,24 +1,11 @@
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, Response
-import socket
-import subprocess
+from flask import Flask, render_template, request, redirect, url_for, Response, jsonify
 import cv2
 import multiprocessing
-from src.gesture_recognizer import gesture_recognizer
-
-
-
-# Dynamically get the Windows host IP address
-# This function assumes that the server is running on a Windows machine
-# and retrieves the IP address of the nameserver from the resolv.conf file.
-# If it fails, it returns a fallback IP.
-def get_windows_host_ip():
-    try:
-        output = subprocess.check_output("cat /etc/resolv.conf | grep nameserver", shell=True)
-        return output.decode().split()[1]
-    except Exception:
-        return "127.0.0.1"  # fallback
+from send_command_to_server import send_command_to_server
+from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
+from client_costants import COMMANDS
 
 # Flask app setup
 app = Flask(
@@ -27,22 +14,21 @@ app = Flask(
     static_folder=os.path.join(os.path.dirname(__file__), '..', 'static')
 )
 
-# TCP server configuration
-SERVER_IP = "host.docker.internal"
-SERVER_PORT = 9000
 
 # List of available gestures and commands
 GESTURES = ["Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up"]
-COMMANDS = ["Volume Up", "Volume Down", "Open Calculator", "Open Chrome", "Take Screenshot"]
 
 # Gesture-command mapping
 gesture_to_command = {}
+
+# Queue for inter-process communication between client and Windows server.
+client_to_server_queue = None
 
 # Recognition state
 recognition_active = False
 
 # Directory to store configuration files
-CONFIG_DIR = os.path.join(os.path.dirname(__file__), "configs")
+CONFIG_DIR = os.path.join(os.path.dirname(__file__), "../static/configs")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
 # Send recognized result to the TCP server
@@ -53,16 +39,6 @@ def send_result(result: str, gesture_to_command: dict):
         print(f"[INFO] Sending associated command: {command}")
         send_command_to_server(command)
 
-# TCP communication with the command server
-def send_command_to_server(command: str):
-    print(f"[INFO] Server IP: {SERVER_IP}, Port: {SERVER_PORT}")
-    print(f"[INFO] Sending command to server: {command}")
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((SERVER_IP, SERVER_PORT))
-            s.sendall(command.encode())
-    except Exception as e:
-        print(f"[ERROR] Connection to server failed: {e}")
 
 # Home route (index.html)
 @app.route("/", methods=["GET", "POST"])
@@ -83,21 +59,25 @@ def index():
                     gesture_to_command[gesture] = command
                 elif gesture in gesture_to_command:
                     del gesture_to_command[gesture]
-            return redirect(url_for("index"))
+            return jsonify({"status": "ok", "message": "Configurazione applicata!"})
         elif action == "save":
             # Aggiorna gesture_to_command e salva su file
             for gesture in GESTURES:
                 print(f"[INFO] Processing gesture: {gesture}")
                 command = request.form.get(gesture)
-                if command:
-                    gesture_to_command[gesture] = command
-                elif gesture in gesture_to_command:
-                    del gesture_to_command[gesture]
+                print(f"[INFO] Associated command: {command}")
+                gesture_to_command[gesture] = command
+                #if command:
+                #    gesture_to_command[gesture] = command
+                #elif gesture in gesture_to_command:
+                #    del gesture_to_command[gesture]
             if selected_config:
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
-            return redirect(url_for("index"))
+                return jsonify({"status": "ok", "message": "Configurazione salvata!"})
+            else:
+                return jsonify({"status": "error", "message": "Nessun nome configurazione selezionato."}, 400)
         else:
             # Carica la configurazione selezionata
             if selected_config:
@@ -128,51 +108,53 @@ def index():
     )
 
 
-
 recognition_process = None
-queue = None
+webcam_frame_queue = None
 
 @app.route("/start")
 def start_recognition():
-    from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
+    
     
     global recognition_active, recognition_process
 
     if not recognition_active:
         recognition_active = True
         # Initialize queue for inter-process communication
-        global queue
-        queue = multiprocessing.Queue()
+        global webcam_frame_queue
+        webcam_frame_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
+        global gesture_to_command
+        global client_to_server_queue
         recognition_process = multiprocessing.Process(
             target=start_gesture_recognition,
-            args=(gesture_to_command, queue,),
+            args=(gesture_to_command, webcam_frame_queue, client_to_server_queue),
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
-    return redirect(url_for("index"))
+    return jsonify({"status": "ok", "active": True})
 
 @app.route("/stop")
 def stop_recognition():
     global recognition_active, recognition_process
     recognition_active = False
-
     if recognition_process and recognition_process.is_alive():
         recognition_process.terminate()
-        recognition_process.join()
-        global queue
-        queue.close()
-        queue.join_thread()
+        #recognition_process.join()
+        print("Stopping recognition...")
+        global webcam_frame_queue
+        webcam_frame_queue.close()
+        webcam_frame_queue.join_thread()
         recognition_process = None
         print("[INFO] Gesture recognition process stopped.")
 
-    return redirect(url_for("index"))
+    return jsonify({"status": "ok", "active": False})
 
 @app.route("/video_feed")
 def video_feed():
     def generate():
+        print("[INFO] Starting video feed...")
         while recognition_active:
-            frame = queue.get() if queue else None
+            frame = webcam_frame_queue.get() if webcam_frame_queue else None
             if frame is None:
                 continue
             ret, buffer = cv2.imencode(".jpg", frame)
@@ -183,5 +165,10 @@ def video_feed():
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 # Start the Flask app
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=8080)
+#if __name__ == "__main__":
+#    app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)
+#    client_to_server_queue = multiprocessing.Queue()
+#    send_to_server_process = multiprocessing.Process(
+#        target=send_command_to_server,
+#        args=(gesture_to_command, client_to_server_queue,),
+#    )

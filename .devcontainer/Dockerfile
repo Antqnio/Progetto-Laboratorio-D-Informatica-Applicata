@@ -16,7 +16,7 @@ WORKDIR /app
 
 
 # Declare a volume for gesture configurations
-VOLUME ["/app/configs"]
+VOLUME ["/app/static/configs"]
 
 # Copy requirements and install dependencies
 COPY docker_client_requirements.lock .

@@ -53,10 +53,10 @@ def handle_client(conn, addr):
                     print(f"[RECEIVED] {message}")
                 
                 # Esegui azioni in base al messaggio ricevuto
-                if message == "Volume_Up":
+                if message == "Volume Up":
                     volume_up()
                     response = "Volume increased"
-                elif message == "Volume_Down":
+                elif message == "Volume Down":
                     volume_down()
                     response = "Volume decreased"
                 # else:
