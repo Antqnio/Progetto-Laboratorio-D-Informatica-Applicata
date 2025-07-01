@@ -5,6 +5,15 @@ async function changeFormFields(e) {
     const fileName = e.target.value;
     if (!fileName) return;
 
+    // Controllo: solo lettere, numeri e underscore, senza spazi
+    const validNamePattern = /^[a-zA-Z0-9_]+$/;
+    if (!validNamePattern.test(fileName)) {
+        console.warn("Invalid configuration name. Only letters, numbers, and underscores are allowed.");
+        alert("Invalid name: use only letters, numbers, or underscores (no spaces).");
+        return;
+    }
+
+
     const path = `static/configs/${fileName}.json`;
     console.log("Caricamento configurazione da:", path);
     try {

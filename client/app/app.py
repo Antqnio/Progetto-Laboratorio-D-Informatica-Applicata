@@ -3,9 +3,9 @@ import json
 from flask import Flask, render_template, request, redirect, url_for, Response, jsonify
 import cv2
 import multiprocessing
-from send_command_to_server import send_command_to_server
 from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
 from client_costants import COMMANDS
+import re
 
 # Flask app setup
 app = Flask(
@@ -31,13 +31,10 @@ recognition_active = False
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "../static/configs")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
-# Send recognized result to the TCP server
-def send_result(result: str, gesture_to_command: dict):
-    print(f"[INFO] Recognized gesture: {result}")
-    command = gesture_to_command.get(result)
-    if command in COMMANDS:
-        print(f"[INFO] Sending associated command: {command}")
-        send_command_to_server(command)
+
+def is_valid_config_name(name : str) -> bool:
+    return bool(re.match(r'^[a-zA-Z0-9_]+$', name))
+
 
 
 # Home route (index.html)
@@ -60,7 +57,7 @@ def index():
                 elif gesture in gesture_to_command:
                     del gesture_to_command[gesture]
             return jsonify({"status": "ok", "message": "Configuration applied successfully."})
-        elif action == "save":
+        elif action == "save" and is_valid_config_name(selected_config):
             # Aggiorna gesture_to_command e salva su file
             for gesture in GESTURES:
                 print(f"[INFO] Processing gesture: {gesture}")
@@ -79,24 +76,9 @@ def index():
             else:
                 return jsonify({"status": "error", "message": "No selected configuration."}, 400)
         else:
-            # Carica la configurazione selezionata
-            if selected_config:
-                path = os.path.join(CONFIG_DIR, selected_config + ".json")
-                if os.path.exists(path):
-                    with open(path, "r") as f:
-                        gesture_to_command.clear()
-                        gesture_to_command.update(json.load(f))
-            return render_template(
-                "index.html",
-                gestures=GESTURES,
-                commands=COMMANDS,
-                mappings=gesture_to_command,
-                active=recognition_active,
-                configs=config_files,
-                selected_config=selected_config
-            )
-
-    # GET o prima apertura
+            print(f"[ERROR] Unknown action: {action}")
+            return jsonify({"status": "error", "message": "Unknown action."}, 400)
+    # GET (usata quando l'utente chiede di vedere i file .json salvati in precedenza) o prima apertura
     return render_template(
         "index.html",
         gestures=GESTURES,
@@ -164,11 +146,4 @@ def video_feed():
                    b"Content-Type: image/jpeg\r\n\r\n" + buffer.tobytes() + b"\r\n")
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-# Start the Flask app
-#if __name__ == "__main__":
-#    app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)
-#    client_to_server_queue = multiprocessing.Queue()
-#    send_to_server_process = multiprocessing.Process(
-#        target=send_command_to_server,
-#        args=(gesture_to_command, client_to_server_queue,),
-#    )
+

@@ -9,6 +9,7 @@ from mediapipe.tasks.python import vision
 from send_command_to_server import send_command_to_server
 from client_costants import COMMANDS
 
+
 #RECOGNITION_INTERVAL = 0.1  # seconds, adjust as needed
 
 def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiprocessing.Queue" = None, client_to_server_queue: "multiprocessing.Queue" = None):

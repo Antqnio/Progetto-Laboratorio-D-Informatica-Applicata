@@ -12,7 +12,10 @@
 
             <form method="POST" id="configForm">
                 <div class="config-section">
-                    <input type="text" name="config_name_text" placeholder="Configuration Name" value="{{ selected_config }}">
+                    <input id="config-name" type="text" name="config_name_text" placeholder="Configuration Name"
+                    value="{{ selected_config }}" pattern="^[a-zA-Z0-9_]+"
+                    title="Only letters, numbers, or underscores are allowed. No spaces.">
+                    
                     <select id="config_name_select" name="config_name_select">
                         <option value="">-- Select Configuration --</option>
                         {% for cfg in configs %}
@@ -47,8 +50,8 @@
                 {% endfor %}
 
                 <div class="buttons">
-                    <button id="apply-btn" type="submit" name="action" value="apply">Apply</button>
-                    <button id="save-btn" type="submit" name="action" value="save">Save</button>
+                    <button id="apply-btn" class="str-stp" type="submit" name="action" value="apply">Apply</button>
+                    <button id="save-btn" class = "str-stp" type="submit" name="action" value="save">Save</button>
                 </div>
             </form>
             <hr>

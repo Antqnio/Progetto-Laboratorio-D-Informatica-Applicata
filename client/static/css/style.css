@@ -143,3 +143,21 @@ button:hover,
     display: none; /* Initially hidden */
 }
 
+.str-stp:disabled {
+  background-color: #ccc;   /* Colore di sfondo grigio */
+  color: #666;              /* Testo sbiadito */
+  cursor: not-allowed;      /* Cursor "vietato" */
+  opacity: 0.6;             /* Più trasparente */
+  border: 1px solid #aaa;   /* Bordo più tenue */
+}
+
+
+#config-name:invalid {
+    border: 2px solid red;
+    background-color: #ffe6e6;
+}
+
+#config-name:invalid:focus {
+    outline: none;
+    box-shadow: 0 0 5px red;
+}
