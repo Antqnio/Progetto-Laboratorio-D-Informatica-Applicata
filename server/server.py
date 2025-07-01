@@ -3,8 +3,41 @@ import threading
 import pythoncom
 import ctypes
 import time
+import psutil
+import subprocess
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
 
-def simulate_volume_key(key, steps=1):
+# Server configuration
+HOST = '0.0.0.0'
+PORT = 9000
+
+# Constants for mouse events
+MOUSEEVENTF_WHEEL = 0x0800
+
+def calculator_already_running() -> bool: 
+    """Check if the calculator is already running."""
+    print_all_processes()
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'] and proc.info['name'].lower() == "calculator.exe":
+            return True
+    return False
+
+def print_all_processes():
+    for proc in psutil.process_iter(['name']):
+        print(f"[INFO] Connection from {proc.info['name']}")
+
+
+# Volume Functions
+def get_master_volume():
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+    volume = cast(interface, POINTER(IAudioEndpointVolume))
+    current_volume = volume.GetMasterVolumeLevelScalar()
+    return int(current_volume * 100)
+
+def simulate_volume_key(key, steps=3):
     VK_VOLUME_UP = 0xAF
     VK_VOLUME_DOWN = 0xAE
     if key == 'up':
@@ -18,65 +51,115 @@ def simulate_volume_key(key, steps=1):
         ctypes.windll.user32.keybd_event(vk, 0, 2, 0)
 
 def volume_up():
-    simulate_volume_key('up')
+    if get_master_volume() < 100:
+        simulate_volume_key('up')
+        return "Volume increased"
+    return "Volume already at 100%"
 
 def volume_down():
-    simulate_volume_key('down')
+    if get_master_volume() > 0:
+        simulate_volume_key('down')
+        return "Volume decreased"
+    return "Volume already at 0%"
 
+# Altri comandi
 def simulate_alt_tab():
-    VK_MENU = 0x12  # Alt
-    VK_TAB = 0x09   # Tab
-    ctypes.windll.user32.keybd_event(VK_MENU, 0, 0, 0)  # Alt down
-    ctypes.windll.user32.keybd_event(VK_TAB, 0, 0, 0)   # Tab down
-    time.sleep(0.05)
-    ctypes.windll.user32.keybd_event(VK_TAB, 0, 2, 0)   # Tab up
-    ctypes.windll.user32.keybd_event(VK_MENU, 0, 2, 0)  # Alt up
+    VK_MENU = 0x12
+    VK_TAB = 0x09
+    ctypes.windll.user32.keybd_event(VK_MENU, 0, 0, 0)
+    ctypes.windll.user32.keybd_event(VK_TAB, 0, 0, 0)
+    time.sleep(2.5)
+    ctypes.windll.user32.keybd_event(VK_TAB, 0, 2, 0)
+    ctypes.windll.user32.keybd_event(VK_MENU, 0, 2, 0)
 
 def simulate_media_play_pause():
     VK_MEDIA_PLAY_PAUSE = 0xB3
     ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 0, 0)
     ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 2, 0)
 
-HOST = '0.0.0.0'
-PORT = 9000
+def open_calculator():
+    # Se già in esecuzione, non aprire
+    for proc in psutil.process_iter(['name']):
+        if proc.info['name'] and proc.info['name'].lower() == "calculator.exe":
+            return False
 
+    # Avvia calc.exe
+    subprocess.Popen("calc.exe")
+    time.sleep(3)
+
+def simulate_print_screen():
+    VK_SNAPSHOT = 0x2C
+    ctypes.windll.user32.keybd_event(VK_SNAPSHOT, 0, 0, 0)
+    ctypes.windll.user32.keybd_event(VK_SNAPSHOT, 0, 2, 0)
+
+def scroll_mouse(amount):
+    # amount: positivo = su, negativo = giù
+    ctypes.windll.user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, amount, 0)
+
+def open_task_manager():
+    subprocess.Popen("taskmgr.exe", shell=True)
+
+# TCP Server
 def handle_client(conn, addr):
     pythoncom.CoInitialize()
     print(f"[INFO] Connection from {addr}")
     try:
         with conn:
+            last_command = ""
             while True:
                 data = conn.recv(1024)
                 try:
-                    message = data.decode('utf-8')
+                    command = data.decode('utf-8').strip()
                 except UnicodeDecodeError:
                     print(f"[ERROR] Failed to decode data from {addr}")
                     continue
 
-                if message is not None and message.strip() != "":
-                    print(f"[RECEIVED] {message}")
+                if not command:
+                    continue
 
-                if message == "Volume Up":
-                    volume_up()
-                    response = "Volume increased"
-                elif message == "Volume Down":
-                    volume_down()
-                    response = "Volume decreased"
-                elif message == "AltTab":
+                print(f"[RECEIVED] {command}")
+                if last_command == command and command == "Open Calculator" and calculator_already_running():
+                    print("[INFO] Calculator already running, skipping command")
+                    continue
+
+                if command == "Volume Up":
+                    response = volume_up()
+                elif command == "Volume Down":
+                    response = volume_down()
+                elif command == "AltTab":
                     simulate_alt_tab()
                     response = "Alt+Tab sent"
-                elif message == "PlayPause":
+                elif command == "PlayPause":
                     simulate_media_play_pause()
                     response = "Media play/pause triggered"
+                elif command == "Open Calculator":
+                    if open_calculator():
+                        response = "Calculator opened"
+                    else:
+                        response = "Calculator already running"
+                elif command == "Screenshot":
+                    simulate_print_screen()
+                    response = "Screenshot key (Print Screen) sent"
+                elif command == "Scroll Up":
+                    scroll_mouse(120)
+                    response = "Mouse scrolled up"
+                elif command == "Scroll Down":
+                    scroll_mouse(-120)
+                    response = "Mouse scrolled down"
+                elif command == "Task Manager":
+                    open_task_manager()
+                    response = "Task Manager opened"
                 else:
-                    response = f"Unknown command: {message}"
+                    response = f"Unknown command: {command}"
 
+                print(f"[RESPONSE] {response}")
                 try:
                     conn.sendall(response.encode('utf-8'))
                 except:
                     pass
     finally:
         pythoncom.CoUninitialize()
+        
 
 def main():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
