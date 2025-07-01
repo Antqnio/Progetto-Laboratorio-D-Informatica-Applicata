@@ -59,7 +59,7 @@ def index():
                     gesture_to_command[gesture] = command
                 elif gesture in gesture_to_command:
                     del gesture_to_command[gesture]
-            return jsonify({"status": "ok", "message": "Configurazione applicata!"})
+            return jsonify({"status": "ok", "message": "Configuration applied successfully."})
         elif action == "save":
             # Aggiorna gesture_to_command e salva su file
             for gesture in GESTURES:
@@ -75,9 +75,9 @@ def index():
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
-                return jsonify({"status": "ok", "message": "Configurazione salvata!"})
+                return jsonify({"status": "ok", "message": "Configuration saved successfully."})
             else:
-                return jsonify({"status": "error", "message": "Nessun nome configurazione selezionato."}, 400)
+                return jsonify({"status": "error", "message": "No selected configuration."}, 400)
         else:
             # Carica la configurazione selezionata
             if selected_config:

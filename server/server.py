@@ -16,18 +16,20 @@ PORT = 9000
 # Constants for mouse events
 MOUSEEVENTF_WHEEL = 0x0800
 
+
 def calculator_already_running() -> bool: 
     """Check if the calculator is already running."""
-    print_all_processes()
     for proc in psutil.process_iter(['name']):
-        if proc.info['name'] and proc.info['name'].lower() == "calculator.exe":
+        if proc.info['name'] and proc.info['name'].lower() in ["calculator.exe", "calc.exe", "calculatorapp.exe", "applicationframehost.exe"]:
             return True
     return False
 
-def print_all_processes():
+def task_manager_already_running() -> bool:
+    """Check if the Task Manager is already running."""
     for proc in psutil.process_iter(['name']):
-        print(f"[INFO] Connection from {proc.info['name']}")
-
+        if proc.info['name'] and proc.info['name'].lower() == "taskmgr.exe":
+            return True
+    return False
 
 # Volume Functions
 def get_master_volume():
@@ -78,11 +80,6 @@ def simulate_media_play_pause():
     ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 2, 0)
 
 def open_calculator():
-    # Se già in esecuzione, non aprire
-    for proc in psutil.process_iter(['name']):
-        if proc.info['name'] and proc.info['name'].lower() == "calculator.exe":
-            return False
-
     # Avvia calc.exe
     subprocess.Popen("calc.exe")
     time.sleep(3)
@@ -109,18 +106,16 @@ def handle_client(conn, addr):
             while True:
                 data = conn.recv(1024)
                 try:
-                    command = data.decode('utf-8').strip()
+                    # split by '|' into an array and take the first element
+                    command = data.decode('utf-8').strip().split('|')[0] 
                 except UnicodeDecodeError:
                     print(f"[ERROR] Failed to decode data from {addr}")
                     continue
 
                 if not command:
                     continue
-
+                print(f"[INFO] Last Command: {last_command}")
                 print(f"[RECEIVED] {command}")
-                if last_command == command and command == "Open Calculator" and calculator_already_running():
-                    print("[INFO] Calculator already running, skipping command")
-                    continue
 
                 if command == "Volume Up":
                     response = volume_up()
@@ -133,10 +128,11 @@ def handle_client(conn, addr):
                     simulate_media_play_pause()
                     response = "Media play/pause triggered"
                 elif command == "Open Calculator":
-                    if open_calculator():
-                        response = "Calculator opened"
-                    else:
-                        response = "Calculator already running"
+                    if last_command == "Open Calculator" and calculator_already_running():
+                        print("[INFO] Calculator already running, skipping command")
+                        continue
+                    open_calculator()
+                    response = "Calculator opened"
                 elif command == "Screenshot":
                     simulate_print_screen()
                     response = "Screenshot key (Print Screen) sent"
@@ -147,11 +143,14 @@ def handle_client(conn, addr):
                     scroll_mouse(-120)
                     response = "Mouse scrolled down"
                 elif command == "Task Manager":
+                    if last_command == "Task Manager" and task_manager_already_running():
+                        print("[INFO] Task Manager already running, skipping command")
+                        continue
                     open_task_manager()
                     response = "Task Manager opened"
                 else:
                     response = f"Unknown command: {command}"
-
+                last_command = command
                 print(f"[RESPONSE] {response}")
                 try:
                     conn.sendall(response.encode('utf-8'))

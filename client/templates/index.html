@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Gesture Recognizer</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script></head>
+    <script  src="{{ url_for('static', filename='js/script.js') }}" defer></script></head>
 <body>
     <h1>Bind Gestures to Commands</h1>
     <div class="main-layout">
@@ -47,8 +47,8 @@
                 {% endfor %}
 
                 <div class="buttons">
-                    <button type="submit" name="action" value="apply">Apply</button>
-                    <button type="submit" name="action" value="save">Save</button>
+                    <button id="apply-btn" type="submit" name="action" value="apply">Apply</button>
+                    <button id="save-btn" type="submit" name="action" value="save">Save</button>
                 </div>
             </form>
             <hr>

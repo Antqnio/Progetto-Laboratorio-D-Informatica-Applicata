@@ -79,6 +79,8 @@ function init() {
     const startBtn = document.getElementById("start-recognition-btn");
     const stopBtn = document.getElementById("stop-recognition-btn");
     const videoElem = document.getElementById("webcam-frame"); // Assicurati che l'img abbia questo id
+    const applyBtn = document.getElementById("apply-btn");
+    const saveBtn = document.getElementById("save-btn");
     console.log("stopBtn", stopBtn);
     if (startBtn && stopBtn && videoElem) {
         startBtn.addEventListener("click", async function(e) {
@@ -91,6 +93,9 @@ function init() {
                 startBtn.style.display = "none";stopBtn.style.display = "inline-block";
                 videoElem.style.display = "block";
                 videoElem.src = "/video_feed?ts=" + Date.now();
+                applyBtn.disabled = true;
+                saveBtn.disabled = true;
+                console.log("apply-btn ", applyBtn);
             }
         });
         
@@ -108,6 +113,9 @@ function init() {
                 startBtn.style.display = "inline-block";
                 videoElem.style.display = "none";
                 videoElem.src = "";
+                applyBtn.disabled = false;
+                saveBtn.disabled = false;
+
             }
         });
     }
