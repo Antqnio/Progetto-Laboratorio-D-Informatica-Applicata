@@ -111,9 +111,7 @@ function init() {
         console.log("Inizializzazione del bottone di stop");
         stopBtn.addEventListener("click", async function(e) {
             e.preventDefault();  // <- blocca qualsiasi submit/navigation
-            console.log("sono qui rosso")
             const resp = await fetch("/stop");
-            console.log("Sono qui 2")
             console.log("Response status:", resp.status, resp.statusText);
             if (resp.ok) {
                 statusElem.textContent = "🔴 Inactive";

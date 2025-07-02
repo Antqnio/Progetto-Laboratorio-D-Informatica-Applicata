@@ -1,8 +1,7 @@
 # client/main.py
 import multiprocessing
-from app.app import app, client_to_server_queue  # importa il Flask app e le variabili globali
 from send_command_to_server import send_command_to_server
-
+import flask_client
 def main():
     # scegli 'spawn' per avere un caricamento pulito in child process
     multiprocessing.set_start_method("spawn", force=True)
@@ -19,11 +18,11 @@ def main():
 
     # aggancia la queue globale di app.py
     # (sovrascrive il valore None impostato in app.py)
-    from app import app as _app_module
-    _app_module.client_to_server_queue = client_to_server_queue
+    
+    flask_client.client_to_server_queue = client_to_server_queue
 
     # avvia Flask (questo blocca finché non interrompi con CTRL‑C)
-    app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)
+    flask_client.app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)
 
     # quando Flask si ferma, diciamo al process di chiudersi
     client_to_server_queue.put(None)

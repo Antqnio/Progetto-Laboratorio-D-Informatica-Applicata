@@ -4,14 +4,14 @@ from flask import Flask, render_template, request, redirect, url_for, Response, 
 import cv2
 import multiprocessing
 from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
-from client_costants import COMMANDS
+from client.client_constants import COMMANDS
 import re
 
 # Flask app setup
 app = Flask(
     __name__,
-    template_folder=os.path.join(os.path.dirname(__file__), '..', 'templates'),
-    static_folder=os.path.join(os.path.dirname(__file__), '..', 'static')
+    template_folder=os.path.join(os.path.dirname(__file__), 'templates'),
+    static_folder=os.path.join(os.path.dirname(__file__), 'static')
 )
 
 
@@ -28,7 +28,7 @@ client_to_server_queue = None
 recognition_active = False
 
 # Directory to store configuration files
-CONFIG_DIR = os.path.join(os.path.dirname(__file__), "../static/configs")
+CONFIG_DIR = os.path.join(os.path.dirname(__file__), "static/configs")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
 
@@ -118,6 +118,8 @@ def start_recognition():
 @app.route("/stop")
 def stop_recognition():
     global recognition_active, recognition_process
+    if recognition_active is False:
+        return jsonify({"status": "no", "active": False})
     recognition_active = False
     if recognition_process and recognition_process.is_alive():
         recognition_process.terminate()
