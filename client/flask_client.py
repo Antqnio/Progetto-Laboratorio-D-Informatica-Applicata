@@ -119,7 +119,7 @@ def index():
     )
 
 @app.route("/get_json_file")
-def get_json_file():
+def get_json_file() -> "Response":
     """
     Flask route to serve a JSON file from the static/configs directory.
 
@@ -162,7 +162,7 @@ webcam_frame_queue = None
 
 
 @app.route("/start")
-def start_recognition():
+def start_recognition() -> "Response":
     """
     Starts the gesture recognition process if it is not already active.
     This endpoint initializes the necessary queues for inter-process communication and
@@ -192,7 +192,7 @@ def start_recognition():
     return jsonify({"status": "ok", "active": True})
 
 @app.route("/stop")
-def stop_recognition():
+def stop_recognition() -> "Response":
     """
     Stops the gesture recognition process if it is currently active.
 
@@ -225,7 +225,7 @@ def stop_recognition():
     return jsonify({"status": "ok", "active": False})
 
 @app.route("/video_feed")
-def video_feed():
+def video_feed() -> "Response":
     """
     Route that streams video frames from the server to the client as an MJPEG stream.
 
