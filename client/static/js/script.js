@@ -109,10 +109,18 @@ async function sendFormDataToFlaskClient(e) {
                 if (configNameSelect) {
                     // Add the new option with the saved configuration name
                     const option = document.createElement("option");
-                    const configName = formData.get("config-name");
+                    // To get the saved configuration name, we have to used the name attribute of the input field
+                    // that was used to save the configuration.
+                    const configName = formData.get("config_name_text");
                     option.value = configName; // Assuming the server returns the saved file name
                     option.textContent = configName;
-                    configNameSelect.appendChild(option);
+                    // Order the options alphabetically
+                    for (let child = configNameSelect.firstChild; child; child = child.nextSibling) {
+                        if (child.value > configName) {
+                            configNameSelect.insertBefore(option, child);
+                            return;
+                        }
+                    }
                 }
             }
             
@@ -251,13 +259,13 @@ function init() {
         startBtn.addEventListener("click", async (e) => {
             e.preventDefault();  // <- block any submit/navigation
             // Start the recognition process
-            await startRecognition(statusElem, videoElem, applyBtn, saveBtn );
+            await startRecognition(startBtn, stopBtn, statusElem, videoElem, applyBtn, saveBtn);
         });
         
         stopBtn.addEventListener("click", async (e) => {
             e.preventDefault();  // <- block any submit/navigation
             // Stop the recognition process
-            await stopRecognition(statusElem, videoElem, applyBtn, saveBtn);
+            await stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBtn, saveBtn);
         });
     }
 

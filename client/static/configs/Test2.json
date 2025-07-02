@@ -4,6 +4,6 @@
   "Open_Palm": "-- No Command --",
   "Closed_Fist": "Open Calculator",
   "Victory": "-- No Command --",
-  "ILoveYou": "-- No Command --",
-  "Pointing_Up": "-- No Command --"
+  "ILoveYou": "Scroll Up",
+  "Pointing_Up": "Scroll Down"
 }

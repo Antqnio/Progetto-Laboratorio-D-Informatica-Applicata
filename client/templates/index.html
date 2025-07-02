@@ -25,7 +25,6 @@
 
     Template Variables:
     - configs: List of available configuration names.
-    - selected_config: Currently selected configuration name.
     - gestures: List of gesture names.
     - commands: List of available commands.
     - mappings: Dictionary mapping gestures to commands for the selected configuration.
@@ -61,28 +60,20 @@
 
             <form method="POST" id="configForm">
                 <div class="config-section">
-                    <!--
-                        selected_config is the name of the currently selected configuration by the user.
-                        input "config-name" allows the user to enter a new configuration name.
-                    -->
                     <input id="config-name" type="text" name="config_name_text" placeholder="Configuration Name"
                     pattern="^[a-zA-Z0-9_]+"
                     title="Only letters, numbers, or underscores are allowed. No spaces.">
                     <!--
                         The select element allows the user to choose from existing configurations.
-                        If a configuration is selected, it will be displayed as the default option.
                         The options are generated from the 'configs' list passed from the Flask backend.
-                        The selected configuration will be highlighted based on the 'selected_config' variable.
                     -->
                     <select id="config_name_select" name="config_name_select">
                         <option value="">-- Select Configuration --</option>
                         {% for cfg in configs %}
                         <!--
                             Each option in the select dropdown corresponds to a configuration name.
-                            The 'selected' attribute is added if the configuration matches the selected_config,
-                            which is .
                         -->
-                        <option value="{{ cfg }}" {% if selected_config == cfg %}selected{% endif %}>{{ cfg }}</option>
+                        <option value="{{ cfg }}">{{ cfg }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -129,10 +120,8 @@
                         {% for command in commands %}
                         <!--
                             Each option in the select dropdown corresponds to a command.
-                            The 'selected' attribute is added if the command matches the current mapping for the gesture.
-                            This allows the user to see which command is currently assigned to each gesture.
                         -->
-                        <option value="{{ command }}" {% if mappings.get(gesture, '') == command %}selected{% endif %}>{{ command }}</option>
+                        <option value="{{ command }}">{{ command }}</option>
                         {% endfor %}
                     </select>
                 </div>
