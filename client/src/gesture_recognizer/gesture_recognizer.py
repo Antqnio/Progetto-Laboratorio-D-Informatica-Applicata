@@ -7,7 +7,7 @@ import multiprocessing
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from send_command_to_server import send_command_to_server
-from client.client_constants import COMMANDS
+from client_constants import COMMANDS
 
 
 #RECOGNITION_INTERVAL = 0.1  # seconds, adjust as needed

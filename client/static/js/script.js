@@ -1,29 +1,37 @@
 "use strict";
 
-
+/**
+ * Change the form fields based on the selected configuration file.
+ * @param {Event} e - The change event from the select element.
+ * This function fetches the JSON file corresponding to the selected configuration name,
+ * validates the file name, and updates the form fields with the data from the JSON file.
+ * It also checks that the file name contains only valid characters (letters, numbers, and underscores
+ */
 async function changeFormFields(e) {
     const fileName = e.target.value;
     if (!fileName) return;
 
-    // Controllo: solo lettere, numeri e underscore, senza spazi
+    // Check if the file name is valid
+    // Only allow letters, numbers, and underscores in the file name
     const validNamePattern = /^[a-zA-Z0-9_]+$/;
     if (!validNamePattern.test(fileName)) {
         console.warn("Invalid configuration name. Only letters, numbers, and underscores are allowed.");
         alert("Invalid name: use only letters, numbers, or underscores (no spaces).");
         return;
     }
-
-
-    const path = `static/configs/${fileName}.json`;
-    console.log("Caricamento configurazione da:", path);
+    
+    // Fetch the JSON file corresponding to the selected configuration name
     try {
-        const response = await fetch(path);
+        const response = await fetch("/get_json_file?file=" + encodeURIComponent(fileName));
         if (!response.ok) {
-            throw new Error(`Errore nel caricamento del file: ${response.status}`);
+            throw new Error(`Error while trying to load the ${fileName}.json file: ${response.status}`);
         }
 
         const configData = await response.json();
-        console.log("Configurazione caricata:", configData);
+        console.log("Configuration loaded:", configData);
+        // Update the form fields with the data from the JSON file
+        // Assuming the form fields have IDs that match the keys in the JSON file
+        // This will set the value of each input field to the corresponding value in the JSON file
         for (const key in configData) {
             const input = document.getElementById(key);
             input.value = configData[key];
@@ -33,100 +41,227 @@ async function changeFormFields(e) {
     }
 }
 
+
+
+/**
+ * Handles form submission to a Flask backend using Fetch API.
+ * Intercepts the submit event, determines which submit button was pressed,
+ * and sends the form data via POST request to the server.
+ * Displays a success or error message based on the server response.
+ *
+ * @async
+ * @param {SubmitEvent} e - The form submit event.
+ */
+async function sendFormDataToFlaskClient(e) {
+    // Find the pressed submit button to determine the action
+    const submitter = e.submitter || document.activeElement;
+    if (!submitter || submitter.name !== "action" || (submitter.value !== "apply" && submitter.value !== "save"))
+        return;
+    e.preventDefault();
+
+    // Get the form element from the event
+    const form = e.target;
+
+    /*
+        Create a FormData object from the form.
+        This allows us to easily send the form data as key-value pairs (key).
+        name attribute of each input field in the form will be used as the key,
+        and the value of the input field will be used as the value.
+    */
+    const formData = new FormData(form);
+    
+    /* 
+        Add the action to the form data based on which button was pressed
+        This will be used by the Flask backend to determine the action to take
+        "apply" will apply the configuration without saving it,
+        "save" will save the configuration to a file.
+    */
+    formData.set("action", submitter.value);
+    
+    /*
+        Send the form data to the Flask backend using Fetch API.
+        The server will handle the request and return a response.
+        If the response is OK, we will display a success message.
+        If the response is not OK, we will display an error message.
+    */
+    try {
+        const response = await fetch("/", {
+            method: "POST",
+            body: formData
+        });
+        if (response.ok) {
+            const data = await response.json();
+        
+            // Display a success message based on the action taken
+            // If the action is "save", we display a success message for saving the configuration
+            // If the action is "apply", we display a success message for applying the configuration
+            const p = document.getElementById("message");
+            p.textContent = data.message || (submitter.value === "save" ? "Configuration saved!" : "Configuration applied!");
+            p.style.display = "block";
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                p.style.display = "none";
+            }, 3000);
+            // If the action was "save", we also reload the configuration names
+            if (submitter.value === "save") {
+                // Get the select element for configuration names
+                const configNameSelect = document.getElementById("config_name_select");
+                if (configNameSelect) {
+                    // Add the new option with the saved configuration name
+                    const option = document.createElement("option");
+                    const configName = formData.get("config-name");
+                    option.value = configName; // Assuming the server returns the saved file name
+                    option.textContent = configName;
+                    configNameSelect.appendChild(option);
+                }
+            }
+            
+        } else {
+            // If the response is not OK, we display an error message
+            const data = await response.json();
+            const p = document.getElementById("message");
+            p.textContent = data.error || "Error while applying the configuration.";
+            p.style.display = "block";
+            // Hide the error message after 3 seconds
+            setTimeout(() => {
+                p.style.display = "none";
+            }, 3000);
+        }
+    } catch (err) {
+        alert("Network error.");
+    }
+};
+
+/**
+ * Starts the recognition process by sending a request to the server and updating the UI accordingly.
+ *
+ * @async
+ * @param {HTMLButtonElement} startBtn - The button element to start recognition.
+ * @param {HTMLButtonElement} stopBtn - The button element to stop recognition.
+ * @param {HTMLElement} statusElem - The element displaying the recognition status.
+ * @param {HTMLVideoElement} videoElem - The video element to display the video feed.
+ * @param {HTMLButtonElement} applyBtn - The button element to apply changes, disabled during recognition.
+ * @param {HTMLButtonElement} saveBtn - The button element to save results, disabled during recognition.
+ * @returns {Promise<void>} Resolves when the recognition process has started and the UI is updated.
+ */
+async function startRecognition(startBtn, stopBtn, statusElem, videoElem, applyBtn, saveBtn) {
+    const resp = await fetch("/start");
+    console.log("Response status:", resp.status, resp.statusText)
+    if (resp.ok) {
+        // Update the UI to reflect that recognition has started
+        statusElem.textContent = "🟢 Active";
+        statusElem.style.color = "green";
+        startBtn.style.display = "none";
+        stopBtn.style.display = "inline-block";
+        videoElem.style.display = "block";
+
+        // This line sets the source of the video element to the video feed URL.
+        // Everytime videElem.src is changed (it happens everytime the startRecognition is called,
+        // and only when the startRecognition is called),
+        // the browser will send a GET request to the flask client
+        // to the /video_feed endpoint to fetch the live video stream.
+        // The ?ts=Date.now() part is used to prevent caching issues, ensuring the
+        // browser always fetches the latest video feed.
+        // The video element will display the live video feed from the server.
+        videoElem.src = "/video_feed?ts=" + Date.now();
+        applyBtn.disabled = true;
+        saveBtn.disabled = true;
+    }
+}
+
+/**
+ * Stops the recognition process by sending a request to the server and updates the UI accordingly.
+ *
+ * @async
+ * @function stopRecognition
+ * @param {HTMLButtonElement} startBtn - The button to start recognition, which will be shown after stopping.
+ * @param {HTMLButtonElement} stopBtn - The button to stop recognition, which will be hidden after stopping.
+ * @param {HTMLElement} statusElem - The element displaying the current status, which will be updated.
+ * @param {HTMLVideoElement} videoElem - The video element displaying the recognition stream, which will be hidden and cleared.
+ * @param {HTMLButtonElement} applyBtn - The button to apply changes, which will be enabled after stopping.
+ * @param {HTMLButtonElement} saveBtn - The button to save changes, which will be enabled after stopping.
+ * @returns {Promise<void>} Resolves when the recognition has been stopped and the UI updated.
+ */
+async function stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBtn, saveBtn) {
+    const resp = await fetch("/stop");
+    console.log("Response status:", resp.status, resp.statusText);
+    if (resp.ok) {
+        // Update the UI to reflect that recognition has stopped
+        statusElem.textContent = "🔴 Inactive";
+        statusElem.style.color = "red";
+        stopBtn.style.display = "none";
+        startBtn.style.display = "inline-block";
+        videoElem.style.display = "none";
+        videoElem.src = "";
+        applyBtn.disabled = false;
+        saveBtn.disabled = false;
+
+    }
+}
+    
+/**
+ * Initializes event listeners and UI logic for the configuration form and webcam recognition controls.
+ *
+ * - Sets up change event for configuration selection dropdown.
+ * - Handles form submission for "apply" and "save" actions, sending data via fetch and displaying messages.
+ * - Manages start/stop recognition buttons, updates UI status, and toggles webcam video feed.
+ * - Disables/enables form buttons based on recognition state.
+ *
+ * Assumes the presence of specific DOM elements with IDs:
+ * - config_name_select
+ * - configForm
+ * - message
+ * - recognition-status
+ * - start-recognition-btn
+ * - stop-recognition-btn
+ * - webcam-frame
+ * - apply-btn
+ * - save-btn
+ */
 function init() {
+    // Add event listener for configuration name selection
+    // This will trigger the changeFormFields function when the selected configuration changes
     const config_name_select = document.getElementById('config_name_select');
     if (config_name_select) {
         config_name_select.addEventListener('change', changeFormFields);
     }
 
-    // Intercetta il submit del form per "apply"
+    // Add event listener for form submission
     const form = document.getElementById("configForm");
     if (form) {
-        form.addEventListener("submit", async function(e) {
-            // Trova il bottone premuto
-            const submitter = e.submitter || document.activeElement;
-            if (!submitter || submitter.name !== "action" || (submitter.value !== "apply" && submitter.value !== "save"))
-                return;
-            e.preventDefault();
-
-            const formData = new FormData(form);
-            formData.set("action", submitter.value);
-
-            try {
-                const response = await fetch("/", {
-                    method: "POST",
-                    body: formData
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    //alert(data.message || (submitter.value === "save" ? "Configurazione salvata!" : "Configurazione applicata!"));
-                    const p = document.getElementById("message");
-                    p.textContent = data.message || (submitter.value === "save" ? "Configurazione salvata!" : "Configurazione applicata!");
-                    p.style.display = "block";
-                    setTimeout(() => {
-                        p.style.display = "none";
-                    }, 3000); // Nasconde il messaggio dopo 3 secondi
-                } else {
-                    const data = await response.json();
-                    const p = document.getElementById("message");
-                    p.textContent = data.error || "Errore nell'applicazione della configurazione.";
-                    p.style.display = "block";
-                    setTimeout(() => {
-                        p.style.display = "none";
-                    }, 3000); // Nasconde il messaggio dopo 3 secondi
-                }
-            } catch (err) {
-                alert("Errore di rete.");
-            }
-        });
-
-
-    
+        form.addEventListener("submit", sendFormDataToFlaskClient)
     }
 
+    /*
+        Initialize the recognition status and buttons.
+        This will set up the event listeners for the start and stop buttons,
+        and update the status text based on the recognition state.
+        It will also handle the webcam video feed.
+    */
+
+    // Get the elements for recognition status and buttons
     const statusElem = document.getElementById("recognition-status");
     const startBtn = document.getElementById("start-recognition-btn");
     const stopBtn = document.getElementById("stop-recognition-btn");
-    const videoElem = document.getElementById("webcam-frame"); // Assicurati che l'img abbia questo id
+    const videoElem = document.getElementById("webcam-frame");
     const applyBtn = document.getElementById("apply-btn");
     const saveBtn = document.getElementById("save-btn");
-    console.log("stopBtn", stopBtn);
-    if (startBtn && stopBtn && videoElem) {
-        startBtn.addEventListener("click", async function(e) {
-            e.preventDefault();  // <- blocca qualsiasi submit/navigation
-            const resp = await fetch("/start");
-            if (resp.ok) {
-                console.log("sono qui verde")
-                statusElem.textContent = "🟢 Active";
-                statusElem.style.color = "green";
-                startBtn.style.display = "none";stopBtn.style.display = "inline-block";
-                videoElem.style.display = "block";
-                videoElem.src = "/video_feed?ts=" + Date.now();
-                applyBtn.disabled = true;
-                saveBtn.disabled = true;
-                console.log("apply-btn ", applyBtn);
-            }
+
+    if (statusElem && startBtn && stopBtn && videoElem && applyBtn && saveBtn) {
+        startBtn.addEventListener("click", async (e) => {
+            e.preventDefault();  // <- block any submit/navigation
+            // Start the recognition process
+            await startRecognition(statusElem, videoElem, applyBtn, saveBtn );
         });
         
-        console.log("Inizializzazione del bottone di stop");
-        stopBtn.addEventListener("click", async function(e) {
-            e.preventDefault();  // <- blocca qualsiasi submit/navigation
-            const resp = await fetch("/stop");
-            console.log("Response status:", resp.status, resp.statusText);
-            if (resp.ok) {
-                statusElem.textContent = "🔴 Inactive";
-                statusElem.style.color = "red";
-                stopBtn.style.display = "none";
-                startBtn.style.display = "inline-block";
-                videoElem.style.display = "none";
-                videoElem.src = "";
-                applyBtn.disabled = false;
-                saveBtn.disabled = false;
-
-            }
+        stopBtn.addEventListener("click", async (e) => {
+            e.preventDefault();  // <- block any submit/navigation
+            // Stop the recognition process
+            await stopRecognition(statusElem, videoElem, applyBtn, saveBtn);
         });
     }
 
 }
 
+// Wait for the DOM to be fully loaded before initializing
 document.addEventListener('DOMContentLoaded', init);

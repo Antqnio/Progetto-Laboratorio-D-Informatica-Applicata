@@ -1,3 +1,52 @@
+<!--
+    index.html - Gesture Recognizer Web Interface
+
+    Description:
+    This template provides a web interface for binding hand gestures to specific commands,
+    managing gesture-command configurations, and controlling a gesture recognition system.
+    It also displays a live webcam feed for gesture input.
+
+    Main Features:
+    - Configuration Management:
+        * Input field and dropdown to select or create gesture-command configurations.
+        * Only allows alphanumeric names with underscores (no spaces).
+    - Gesture-Command Mapping:
+        * Lists available gestures with icons and allows users to assign commands to each gesture.
+        * Dropdowns populated with available commands.
+    - Apply/Save Buttons:
+        * "Apply" applies the current mapping without saving.
+        * "Save" persists the configuration.
+    - Gesture Recognizer Control:
+        * Displays current recognition status (Active/Inactive) with colored indicator.
+        * Buttons to start or stop the gesture recognizer.
+    - Webcam Feed:
+        * Shows live video stream for gesture input.
+        * Area for displaying messages or feedback.
+
+    Template Variables:
+    - configs: List of available configuration names.
+    - selected_config: Currently selected configuration name.
+    - gestures: List of gesture names.
+    - commands: List of available commands.
+    - mappings: Dictionary mapping gestures to commands for the selected configuration.
+    - active: Boolean indicating if the gesture recognizer is active.
+
+    Static Files:
+    - style.css: Stylesheet for page layout and appearance.
+    - script.js: JavaScript for dynamic UI behavior.
+
+    Endpoints Used:
+    - url_for('static', filename='...'): For static assets.
+    - url_for('video_feed'): For live webcam stream.
+
+    Usage:
+    - Select or enter a configuration name.
+    - Assign commands to gestures.
+    - Apply or save the configuration.
+    - Start or stop gesture recognition.
+    - View live webcam feed for gesture input.
+
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,21 +61,45 @@
 
             <form method="POST" id="configForm">
                 <div class="config-section">
+                    <!--
+                        selected_config is the name of the currently selected configuration by the user.
+                        input "config-name" allows the user to enter a new configuration name.
+                    -->
                     <input id="config-name" type="text" name="config_name_text" placeholder="Configuration Name"
-                    value="{{ selected_config }}" pattern="^[a-zA-Z0-9_]+"
+                    pattern="^[a-zA-Z0-9_]+"
                     title="Only letters, numbers, or underscores are allowed. No spaces.">
-                    
+                    <!--
+                        The select element allows the user to choose from existing configurations.
+                        If a configuration is selected, it will be displayed as the default option.
+                        The options are generated from the 'configs' list passed from the Flask backend.
+                        The selected configuration will be highlighted based on the 'selected_config' variable.
+                    -->
                     <select id="config_name_select" name="config_name_select">
                         <option value="">-- Select Configuration --</option>
                         {% for cfg in configs %}
+                        <!--
+                            Each option in the select dropdown corresponds to a configuration name.
+                            The 'selected' attribute is added if the configuration matches the selected_config,
+                            which is .
+                        -->
                         <option value="{{ cfg }}" {% if selected_config == cfg %}selected{% endif %}>{{ cfg }}</option>
                         {% endfor %}
                     </select>
                 </div>
-
+                
+                <!--
+                    The 'mappings' dictionary contains the current gesture-command mappings for the selected configuration.
+                    Each key is a gesture name, and the value is the command assigned to that gesture.
+                    The form will submit these mappings when the user clicks "Apply" or "Save". 
+                -->
                 {% for gesture in gestures %}
                 <div class="gesture-row">
                     <label class="gesture-label" for="{{ gesture }}">
+                        <!--
+                            The gesture icon is displayed based on the gesture name.
+                            Each gesture has a corresponding emoji icon for visual representation.
+                            The icon is displayed before the gesture name in the label.
+                        -->
                         <span class="gesture-icon">
                             {% if gesture == "Thumb_Up" %}👍
                             {% elif gesture == "Thumb_Down" %}👎
@@ -38,11 +111,27 @@
                             {% else %}❓
                             {% endif %}
                         </span>
+                    <!--
+                        The label for each gesture includes the gesture name formatted for display.
+                        The gesture name is converted to a more readable format by replacing underscores with spaces
+                        and capitalizing the first letter of each word.
+                    -->
                         {{ gesture.replace('_', ' ').title() }}
                     </label>
+                    
+                    <!--
+                        The select element allows the user to choose a command for the gesture.
+                        The options are populated from the 'commands' list passed from the Flask backend.
+                        The selected command for each gesture is determined by the 'mappings' dictionary. 
+                    -->
                     <select id="{{ gesture }}" name="{{ gesture }}">
                         <option value="-- No Command --">-- No Command --</option>
                         {% for command in commands %}
+                        <!--
+                            Each option in the select dropdown corresponds to a command.
+                            The 'selected' attribute is added if the command matches the current mapping for the gesture.
+                            This allows the user to see which command is currently assigned to each gesture.
+                        -->
                         <option value="{{ command }}" {% if mappings.get(gesture, '') == command %}selected{% endif %}>{{ command }}</option>
                         {% endfor %}
                     </select>
@@ -57,9 +146,19 @@
             <hr>
 
             <h2>Gesture Recognizer</h2>
+            <!--
+                The recognition status is displayed in a paragraph with id "recognition-status".
+                The color of the text changes based on whether the recognizer is active or inactive.
+                The status is determined by the 'active' variable passed from the Flask backend.
+            -->
             <p id="recognition-status" style="text-align: center; color: {{ 'green' if active else 'red' }};">
                 {% if active %}🟢 Active{% else %}🔴 Inactive{% endif %}
             </p>
+            <!--
+                The buttons to start or stop the recognition are conditionally displayed based on the 'active' variable.
+                If 'active' is True, the "Stop Recognition" button is shown, otherwise the "Start Recognition" button is shown.
+                The buttons have ids "stop-recognition-btn" and "start-recognition-btn" for JavaScript handling. 
+            -->
             <div style="text-align: center;">
                 {% if active %}
                     <button id="stop-recognition-btn" type="button">Stop Recognition</button>
@@ -73,6 +172,11 @@
         <div class="right-panel">
             <h2>Webcam Live</h2>
             <div class="webcam-container">
+                <!-- 
+                    The video element will display the live video feed from the server.
+                    The src attribute changes only when startRecognition function in script.js is called.
+                    It changes to "/video_feed?ts=" + Date.now() to prevent caching issues.
+                -->
                 <img id="webcam-frame" src="{{ url_for('video_feed') }}" width="640" height="480">
             </div>
             <p id="message"></p>
