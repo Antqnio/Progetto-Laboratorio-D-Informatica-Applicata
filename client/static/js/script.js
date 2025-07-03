@@ -237,7 +237,7 @@ async function stopClient(e) {
 }
 
 const SERVER_UNREACHABLE = "Server is not running or not reachable.";
-
+let SERVER_CHECK_TIMER = null;
 /**
  * Asynchronously checks if the server is running by sending a request to the "/check_server" endpoint.
  * Updates the text content of the element with id "message" based on the server's status.
@@ -259,6 +259,8 @@ async function checkIfServerIsRunning() {
         if (resp.ok) {  
             console.log("Server is running.");
             message.textContent = "Server is running.";
+            clearInterval(SERVER_CHECK_TIMER);  // Stop checking if the server is running
+            SERVER_CHECK_TIMER = null;  // Clear the timer variable
         }
         else {
             console.error("Server is not running or not reachable.");
@@ -342,7 +344,7 @@ function init() {
     // Set the initial message for the server status
     serverMessage.textContent = SERVER_UNREACHABLE;
     // Check if the server is running when the page loads
-    setInterval(() => {
+    SERVER_CHECK_TIMER = setInterval(() => {
         // Check if the server is running every 5 seconds
         checkIfServerIsRunning();
     }, 5000);

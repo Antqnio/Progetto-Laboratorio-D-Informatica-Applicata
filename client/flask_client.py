@@ -313,12 +313,9 @@ def check_server() -> "Response":
     Returns:
         Response: A JSON response indicating whether the server is running or not.
     """
+    global flask_to_socket_queue
     try:
-        # Send a request to the server to check if it's running
-        response = app.test_client().get("/")
-        if response.status_code == 200:
-            return jsonify({"status": "ok", "message": "Server is running."})
-        else:
-            return jsonify({"status": "error", "message": "Server is not running."}), 503
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        info = flask_to_socket_queue.get(block=False)
+        return jsonify({f"status": "ok", "message": {info}})
+    except multiprocessing.queues.Empty:
+        return jsonify({"status": "error", "message": "[INFO] Server is not running."}), 503

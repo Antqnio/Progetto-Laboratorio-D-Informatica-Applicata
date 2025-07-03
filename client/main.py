@@ -46,13 +46,15 @@ def main():
     flask_client.gesture_recognizer_to_socket = gesture_recognizer_to_socket
 
     # Start Flask (this blocks until you stop it with CTRL-C)
-    flask_client.app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)
+    flask_client.app.run(host="0.0.0.0", port=8080, threaded=True)
     print("[INFO] Flask client started.")
 
     # When Flask stops, signal the command-sending process to terminate
     print("[INFO] Stopping client process...")
-    flask_to_socket_queue.put(None)
+    send_proc.terminate()
+    print("[INFO] Waiting for command-sending process to finish...")
     send_proc.join()
+    print("[INFO] Client processes stopped.")
 
 if __name__ == "__main__":
     main()

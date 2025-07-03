@@ -24,8 +24,6 @@ def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue
     Args:
         gesture_recognizer_to_socket (multiprocessing.Queue): A queue from which commands are received to be sent to the server.
         flask_to_socket_queue (multiprocessing.Queue): A queue to send messages back to the Flask client.
-    Raises:
-        socket.timeout: If the connection to the server times out.
     Returns:
         None
     Behavior:
@@ -37,7 +35,17 @@ def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue
     """
     
     
-    def handle_sigterm(signum, frame):
+    def handle_sigterm(signum, frame) -> None:
+        """
+        Handle the SIGTERM signal by printing an informational message and exiting the program.
+
+        Args:
+            signum (int): The signal number received (typically signal.SIGTERM).
+            frame (FrameType): The current stack frame (unused).
+
+        Returns:
+            None
+        """
         print("[INFO] received SIGTERM. Closing connection and exiting...")
         sys.exit(0)
     
@@ -50,7 +58,6 @@ def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue
     while True:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                #s.settimeout(5)  # 5 seconds timeout for connection
                 s.connect((SERVER_IP, SERVER_PORT))
                 flask_to_socket_queue.put("[INFO] Connected to server successfully.")
                 while True:
@@ -61,9 +68,8 @@ def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue
                         return
                     print(f"[INFO] Sending command to server: {command}")
                     s.sendall(command.encode())
-        #except socket.timeout:
-        #    print("[ERROR] Connection to server timed out. Retrying...")
         except SystemExit:
+            # Handle SystemExit to gracefully exit the process
             if s is not None:
                 try:
                     s.shutdown(socket.SHUT_RDWR) # Not needed, but can be used to close the socket gracefully
