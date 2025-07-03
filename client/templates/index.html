@@ -85,49 +85,51 @@
                     Each key is a gesture name, and the value is the command assigned to that gesture.
                     The form will submit these mappings when the user clicks "Apply" or "Save". 
                 -->
-                {% for gesture in gestures %}
-                <div class="gesture-row">
-                    <label class="gesture-label" for="{{ gesture }}">
+                <div id="gesture-table">
+                    {% for gesture in gestures %}
+                    <div class="gesture-row">
+                        <label class="gesture-label" for="{{ gesture }}">
+                            <!--
+                                The gesture icon is displayed based on the gesture name.
+                                Each gesture has a corresponding emoji icon for visual representation.
+                                The icon is displayed before the gesture name in the label.
+                            -->
+                            <span class="gesture-icon">
+                                {% if gesture == "Thumb_Up" %}👍
+                                {% elif gesture == "Thumb_Down" %}👎
+                                {% elif gesture == "Open_Palm" %}🖐️
+                                {% elif gesture == "Closed_Fist" %}✊
+                                {% elif gesture == "Victory" %}✌️
+                                {% elif gesture == "ILoveYou" %}🤟
+                                {% elif gesture == "Pointing_Up" %}👆
+                                {% else %}❓
+                                {% endif %}
+                            </span>
                         <!--
-                            The gesture icon is displayed based on the gesture name.
-                            Each gesture has a corresponding emoji icon for visual representation.
-                            The icon is displayed before the gesture name in the label.
+                            The label for each gesture includes the gesture name formatted for display.
+                            The gesture name is converted to a more readable format by replacing underscores with spaces
+                            and capitalizing the first letter of each word.
                         -->
-                        <span class="gesture-icon">
-                            {% if gesture == "Thumb_Up" %}👍
-                            {% elif gesture == "Thumb_Down" %}👎
-                            {% elif gesture == "Open_Palm" %}🖐️
-                            {% elif gesture == "Closed_Fist" %}✊
-                            {% elif gesture == "Victory" %}✌️
-                            {% elif gesture == "ILoveYou" %}🤟
-                            {% elif gesture == "Pointing_Up" %}👆
-                            {% else %}❓
-                            {% endif %}
-                        </span>
-                    <!--
-                        The label for each gesture includes the gesture name formatted for display.
-                        The gesture name is converted to a more readable format by replacing underscores with spaces
-                        and capitalizing the first letter of each word.
-                    -->
-                        {{ gesture.replace('_', ' ').title() }}
-                    </label>
-                    
-                    <!--
-                        The select element allows the user to choose a command for the gesture.
-                        The options are populated from the 'commands' list passed from the Flask backend.
-                        The selected command for each gesture is determined by the 'mappings' dictionary. 
-                    -->
-                    <select id="{{ gesture }}" name="{{ gesture }}">
-                        <option value="-- No Command --">-- No Command --</option>
-                        {% for command in commands %}
+                            {{ gesture.replace('_', ' ').title() }}
+                        </label>
+                        
                         <!--
-                            Each option in the select dropdown corresponds to a command.
+                            The select element allows the user to choose a command for the gesture.
+                            The options are populated from the 'commands' list passed from the Flask backend.
+                            The selected command for each gesture is determined by the 'mappings' dictionary. 
                         -->
-                        <option value="{{ command }}">{{ command }}</option>
-                        {% endfor %}
-                    </select>
+                        <select class="gesture-select" id="{{ gesture }}" name="{{ gesture }}">
+                            <option value="-- No Command --">-- No Command --</option>
+                            {% for command in commands %}
+                            <!--
+                                Each option in the select dropdown corresponds to a command.
+                            -->
+                            <option value="{{ command }}">{{ command }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
 
                 <div class="buttons">
                     <button id="apply-btn" class="str-stp" type="submit" name="action" value="apply">Apply</button>
