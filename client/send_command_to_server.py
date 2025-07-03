@@ -38,10 +38,9 @@ def send_command_to_server(client_to_server_queue : "multiprocessing.Queue"):
                 while True:
                     # Wait for a command from the queue
                     command = client_to_server_queue.get()
-                    command = command + "|"
                     if command is None:
-                        print("[INFO] No command received, exiting...")
-                        break
+                        print("[INFO] Popped argument is None: received, exiting...")
+                        return
                     print(f"[INFO] Sending command to server: {command}")
                     s.sendall(command.encode())
         except Exception as e:

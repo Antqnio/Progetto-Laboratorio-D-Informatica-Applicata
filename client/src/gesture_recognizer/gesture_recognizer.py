@@ -14,12 +14,34 @@ import numpy as np
 import os
 import time as tm
 import multiprocessing
+import signal
+import sys
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from send_command_to_server import send_command_to_server
 from client_constants import COMMANDS
 
-
+def make_sigterm_handler(cap) -> "callable":
+    """
+    Creates a SIGTERM signal handler that safely releases a video capture device and closes OpenCV windows.
+    This function is useful for ensuring that resources are cleaned up properly when the program receives a termination signal.
+    A termination signal (SIGTERM) is sent by flask_client.py when the user wants to stop recognizing gestures.
+    Args:
+        cap: An object representing the video capture device (e.g., cv2.VideoCapture).
+    Returns:
+        callable: A signal handler function that can be registered to handle SIGTERM signals. When invoked, it releases the video capture device if open, destroys all OpenCV windows, and exits the program.
+    Note:
+        The returned handler function expects to be called with the standard signal handler arguments (signum, frame).
+    """
+    
+    def handle_sigterm(signum, frame):
+        print("[INFO] received SIGTERM.")
+        if cap.isOpened():
+            cap.release()
+            print("[INFO] Webcam released.")
+        cv2.destroyAllWindows()
+        sys.exit(0)
+    return handle_sigterm
 
 def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiprocessing.Queue" = None, client_to_server_queue: "multiprocessing.Queue" = None) -> None:
     """
@@ -117,6 +139,7 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
     with GestureRecognizer.create_from_options(options) as recognizer:
         # Select a webcam to capture video from.
         cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        signal.signal(signal.SIGTERM, make_sigterm_handler(cap))
         # Set the video codec, frame width, and height.
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)

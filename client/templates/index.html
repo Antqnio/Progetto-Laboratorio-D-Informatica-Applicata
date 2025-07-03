@@ -51,6 +51,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Gesture Recognizer</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/icons/palm-scanner.png') }}" type="image/png">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script  src="{{ url_for('static', filename='js/script.js') }}" defer></script></head>
 <body>
@@ -133,7 +134,7 @@
                 </div>
             </form>
             <hr>
-
+            <button id="stop-client-btn" type="button">Stop Client</button>
             <h2>Gesture Recognizer</h2>
             <!--
                 The recognition status is displayed in a paragraph with id "recognition-status".
@@ -166,10 +167,16 @@
                     The src attribute changes only when startRecognition function in script.js is called.
                     It changes to "/video_feed?ts=" + Date.now() to prevent caching issues.
                 -->
-                <img id="webcam-frame" src="{{ url_for('video_feed') }}" width="640" height="480">
+                <img id="webcam-frame" src="{{ url_for('video_feed') }}" width="640" height="480" alt="Webcam Feed">
             </div>
             <p id="message"></p>
         </div>
     </div>
+    <footer>
+        <i>
+        <p>Gesture Recognizer Web Interface</p>
+        <p>© July 2025 - Alessandro Trusendi - Antonio Querci</p>
+        </i>
+    </footer>
 </body>
 </html>
