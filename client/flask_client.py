@@ -1,6 +1,12 @@
 # client/flask_client.py
 # -*- coding: utf-8 -*-
-
+"""
+This module contains the Flask web application for the gesture recognition client.
+It provides routes for displaying the main configuration page, starting and stopping gesture recognition,
+and streaming video from the webcam.
+The application allows users to map gestures to commands, save configurations, and view the video feed
+from the webcam in real-time.
+"""
 import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, Response, jsonify
@@ -19,7 +25,7 @@ app = Flask(
 
 
 # List of available gestures
-GESTURES = ["Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up"]
+GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
 
 # Gesture-command mapping
 gesture_to_command = {}
@@ -125,7 +131,8 @@ def get_json_file() -> "Response":
 
     This route is used to load configuration files dynamically based on the request parameter 'file'.
     It ensures that the requested file exists and is a valid JSON file before serving it.
-
+    Args:
+        request (Flask request object): The request object containing query parameters.
     Returns:
         - JSON response with the content of the requested file if found.
         - 404 error if the file does not exist or is not a valid JSON file.
@@ -169,6 +176,8 @@ def start_recognition() -> "Response":
     launches a separate process to handle gesture recognition. It sets the global
     `recognition_active` flag to True and starts the process with the required arguments.
     If the recognition process is already active, it does nothing.
+    Args:
+        None
     Returns:
         Response: A JSON response indicating the status and whether recognition is active.
     """
@@ -201,7 +210,8 @@ def stop_recognition() -> "Response":
     If active, it sets the recognition flag to False, terminates the recognition process if it is alive,
     closes and joins the webcam frame queue, and sets the process reference to None.
     Returns a JSON response indicating the recognition process has been stopped.
-
+    Args:
+        None
     Returns:
         Response: A Flask JSON response with the status and active state.
     """
@@ -228,7 +238,8 @@ def stop_recognition() -> "Response":
 def video_feed() -> "Response":
     """
     Route that streams video frames from the server to the client as an MJPEG stream.
-
+    Args:
+        None
     Returns:
         Response: A Flask Response object that streams JPEG-encoded video frames
         using the multipart/x-mixed-replace MIME type.

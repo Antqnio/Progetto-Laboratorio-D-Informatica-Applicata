@@ -4,7 +4,7 @@
 This module contains constants used in the client application.
 """
 
-COMMANDS = ["Volume Up", 
+COMMANDS = ("Volume Up", 
             "Volume Down", 
             "Open Calculator", 
             "Screenshot", 
@@ -12,4 +12,4 @@ COMMANDS = ["Volume Up",
             "PlayPause", 
             "Scroll Up", 
             "Scroll Down",
-            "Task Manager"]
+            "Task Manager")

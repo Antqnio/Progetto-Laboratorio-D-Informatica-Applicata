@@ -293,14 +293,6 @@ def handle_client(conn, addr) -> None:
                 
                 last_command = command
                 print(f"[RESPONSE] {response}")
-
-                # Send the response back to the client
-                # Use try-except to handle any issues with sending data
-                try:
-                    conn.sendall(response.encode('utf-8'))
-                except:
-                    # Handle any exceptions that occur during client handling
-                    pass
     finally:
         # Deinitialize COM to clean up resources
         pythoncom.CoUninitialize()
