@@ -13,9 +13,9 @@ import json
 from flask import Flask, render_template, request, redirect, url_for, Response, jsonify
 import cv2
 import multiprocessing
+import ctypes
 from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
 from client_constants import COMMANDS
-import re
 
 # Flask app setup
 app = Flask(
@@ -32,8 +32,9 @@ GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "IL
 gesture_to_command = {}
 
 # Queue for inter-process communication between client and Windows server.
-gesture_recognizer_to_socket = None
-flask_to_socket_queue = None
+gesture_recognizer_to_socket_queue = None
+# Boolean value to indicate if the server is running. This will be updated by the send_command_to_server function.
+server_is_running = multiprocessing.Value(ctypes.c_bool, True)
 
 
 
@@ -193,10 +194,10 @@ def start_recognition() -> "Response":
         webcam_frame_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
         global gesture_to_command
-        global gesture_recognizer_to_socket
+        global gesture_recognizer_to_socket_queue
         recognition_process = multiprocessing.Process(
             target=start_gesture_recognition,
-            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket),
+            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket_queue),
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
@@ -313,9 +314,8 @@ def check_server() -> "Response":
     Returns:
         Response: A JSON response indicating whether the server is running or not.
     """
-    global flask_to_socket_queue
-    try:
-        info = flask_to_socket_queue.get(block=False)
-        return jsonify({f"status": "ok", "message": {info}})
-    except multiprocessing.queues.Empty:
-        return jsonify({"status": "error", "message": "[INFO] Server is not running."}), 503
+    global server_is_running
+    if server_is_running.value:
+        return jsonify({"status": "ok", "message": "Connection established."})
+    else:
+        return jsonify({"status": "error", "message": "Server is not running."}), 503

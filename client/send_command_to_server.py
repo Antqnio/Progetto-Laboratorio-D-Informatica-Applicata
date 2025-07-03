@@ -9,6 +9,7 @@ import multiprocessing
 import socket
 import sys
 import signal
+import ctypes
 
 # TCP server configuration
 SERVER_IP = "host.docker.internal"
@@ -17,13 +18,13 @@ SERVER_PORT = 9000
 
 
 # TCP communication with the command server
-def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue", flask_to_socket_queue : "multiprocessing.Queue"):
+def send_command_to_server(gesture_recognizer_to_socket_queue : "multiprocessing.Queue", server_is_running : "ctypes.c_bool") -> None:
     """
     Continuously retrieves commands from a multiprocessing queue and sends them to a server over a TCP socket.
 
     Args:
-        gesture_recognizer_to_socket (multiprocessing.Queue): A queue from which commands are received to be sent to the server.
-        flask_to_socket_queue (multiprocessing.Queue): A queue to send messages back to the Flask client.
+        gesture_recognizer_to_socket_queue (multiprocessing.Queue): A queue from which commands are received to be sent to the server.
+        server_is_running (ctypes.c_bool): A shared boolean value indicating whether the server is running. This function will set this value to True when the connection is established and to False if the connection is lost.
     Returns:
         None
     Behavior:
@@ -59,10 +60,12 @@ def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((SERVER_IP, SERVER_PORT))
-                flask_to_socket_queue.put("[INFO] Connected to server successfully.")
+                print("[INFO] Connected to server successfully.")
+                # Set the server_is_running flag to True to signal that the server is running to flask_client.py
+                server_is_running.value = True
                 while True:
                     # Wait for a command from the queue
-                    command = gesture_recognizer_to_socket.get()
+                    command = gesture_recognizer_to_socket_queue.get()
                     if command is None:
                         print("[INFO] Popped argument is None: received, exiting...")
                         return
@@ -76,5 +79,8 @@ def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue
                 except Exception:
                     pass
             raise # Pass the SystemExit exception to exit the process
+        except (BrokenPipeError, ConnectionResetError) as e:
+            print(f"[ERROR] Lost connection to server: {e}")
+            server_is_running.value = False
         except Exception as e:
             print(f"[ERROR] Connection to server failed: {e}")

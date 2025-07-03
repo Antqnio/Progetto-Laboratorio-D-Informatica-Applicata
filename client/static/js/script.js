@@ -249,7 +249,7 @@ let SERVER_CHECK_TIMER = null;
  * @returns {Promise<void>} Resolves when the server status check is complete and the message is updated.
  */
 async function checkIfServerIsRunning() {
-    const message = document.getElementById("message");
+    const serverMessage = document.getElementById("server-message");
     if (!message) {
         console.error("Message element not found.");
         return;
@@ -258,17 +258,17 @@ async function checkIfServerIsRunning() {
         const resp = await fetch("/check_server");
         if (resp.ok) {  
             console.log("Server is running.");
-            message.textContent = "Server is running.";
-            clearInterval(SERVER_CHECK_TIMER);  // Stop checking if the server is running
+            serverMessage.innerText = "Server is running.";
+            // clearInterval(SERVER_CHECK_TIMER);  // Stop checking if the server is running
             SERVER_CHECK_TIMER = null;  // Clear the timer variable
         }
         else {
             console.error("Server is not running or not reachable.");
-            message.textContent = SERVER_UNREACHABLE
+            serverMessage.innerText = SERVER_UNREACHABLE
         }
     } catch (err) {
         console.error("Network error while checking server status:", err);
-        message.textContent = "Network error while checking server status.";
+        serverMessage.innerText = "Network error while checking server status.";
     }
 }
 
