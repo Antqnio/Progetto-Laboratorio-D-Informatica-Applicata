@@ -139,6 +139,7 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
     with GestureRecognizer.create_from_options(options) as recognizer:
         # Select a webcam to capture video from.
         cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        # Register the SIGTERM signal handler to release the webcam and close OpenCV windows.
         signal.signal(signal.SIGTERM, make_sigterm_handler(cap))
         # Set the video codec, frame width, and height.
         cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))

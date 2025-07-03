@@ -26,13 +26,16 @@ def main():
     # Set the start method for multiprocessing to 'spawn'
     multiprocessing.set_start_method("spawn", force=True)
 
-    # Initialize a single multiprocessing queue for communication between client and server
-    client_to_server_queue = multiprocessing.Queue()
-
+    # Initialize a single multiprocessing queue for communication between gesture_recognizer.py and send_command_to_server.py
+    gesture_recognizer_to_socket = multiprocessing.Queue()
+    flask_client.gesture_recognizer_to_socket = gesture_recognizer_to_socket
+    # Initialize a single multiprocessing queue for communication between Flask client and send_command_to_server.py
+    flask_to_socket_queue = multiprocessing.Queue()
+    flask_client.flask_to_socket_queue = flask_to_socket_queue
     # Start a separate process to listen to the queue and send commands to the server
     send_proc = multiprocessing.Process(
         target=send_command_to_server,
-        args=(client_to_server_queue,)
+        args=(gesture_recognizer_to_socket, flask_to_socket_queue,)
     )
     send_proc.start()
 
@@ -40,14 +43,15 @@ def main():
     # Bind the global queue from app.py to the Flask client
     # (this overrides the None value set in app.py)
     
-    flask_client.client_to_server_queue = client_to_server_queue
+    flask_client.gesture_recognizer_to_socket = gesture_recognizer_to_socket
 
     # Start Flask (this blocks until you stop it with CTRL-C)
     flask_client.app.run(debug=True, host="0.0.0.0", port=8080, threaded=True)
-
+    print("[INFO] Flask client started.")
 
     # When Flask stops, signal the command-sending process to terminate
-    client_to_server_queue.put(None)
+    print("[INFO] Stopping client process...")
+    flask_to_socket_queue.put(None)
     send_proc.join()
 
 if __name__ == "__main__":

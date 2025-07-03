@@ -206,6 +206,70 @@ async function stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBt
 
     }
 }
+
+
+/**
+ * Handles the stop client action by preventing the default event behavior,
+ * sending a request to the server to stop the client, and reloading the page
+ * if the operation is successful. Logs errors to the console if the request fails.
+ *
+ * @async
+ * @param {Event} e - The event object triggered by the user action.
+ * @throws {Error} If the fetch request fails.
+ * @returns {Promise<void>}
+ */
+async function stopClient(e) {
+    e.preventDefault();  // <- block any submit/navigation
+    // Send a request to stop the client
+    try {
+        const resp = await fetch("/stop_client");
+        if (resp.ok) {
+            console.log("Client stopped successfully.");
+            window.location.reload();  // Reload the page to reflect the changes
+        } else {
+            console.error("Error stopping the client:", resp.statusText);
+        }
+    }
+    catch (err) {
+        console.error("Network error while trying to stop the client:", err)
+
+    }
+}
+
+const SERVER_UNREACHABLE = "Server is not running or not reachable.";
+
+/**
+ * Asynchronously checks if the server is running by sending a request to the "/check_server" endpoint.
+ * Updates the text content of the element with id "message" based on the server's status.
+ * Logs relevant information or errors to the console.
+ *
+ * @async
+ * @function
+ * @throws {Error} If the fetch request fails
+ * @returns {Promise<void>} Resolves when the server status check is complete and the message is updated.
+ */
+async function checkIfServerIsRunning() {
+    const message = document.getElementById("message");
+    if (!message) {
+        console.error("Message element not found.");
+        return;
+    }
+    try {
+        const resp = await fetch("/check_server");
+        if (resp.ok) {  
+            console.log("Server is running.");
+            message.textContent = "Server is running.";
+        }
+        else {
+            console.error("Server is not running or not reachable.");
+            message.textContent = SERVER_UNREACHABLE
+        }
+    } catch (err) {
+        console.error("Network error while checking server status:", err);
+        message.textContent = "Network error while checking server status.";
+    }
+}
+
     
 /**
  * Initializes event listeners and UI logic for the configuration form and webcam recognition controls.
@@ -268,6 +332,20 @@ function init() {
             await stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBtn, saveBtn);
         });
     }
+
+    const stopClientBtn = document.getElementById("stop-client-btn");
+    if (stopClientBtn) {
+        stopClientBtn.addEventListener("click", stopClient);
+    }
+
+    const serverMessage = document.getElementById("server-message");
+    // Set the initial message for the server status
+    serverMessage.textContent = SERVER_UNREACHABLE;
+    // Check if the server is running when the page loads
+    setInterval(() => {
+        // Check if the server is running every 5 seconds
+        checkIfServerIsRunning();
+    }, 5000);
 
 }
 

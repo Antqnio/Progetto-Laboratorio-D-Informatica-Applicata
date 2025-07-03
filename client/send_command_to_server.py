@@ -7,6 +7,8 @@ the get_result function (a function in gesture_recognizer.py).
 
 import multiprocessing
 import socket
+import sys
+import signal
 
 # TCP server configuration
 SERVER_IP = "host.docker.internal"
@@ -15,13 +17,17 @@ SERVER_PORT = 9000
 
 
 # TCP communication with the command server
-def send_command_to_server(client_to_server_queue : "multiprocessing.Queue"):
+def send_command_to_server(gesture_recognizer_to_socket : "multiprocessing.Queue", flask_to_socket_queue : "multiprocessing.Queue"):
     """
     Continuously retrieves commands from a multiprocessing queue and sends them to a server over a TCP socket.
 
     Args:
-        client_to_server_queue (multiprocessing.Queue): A queue from which commands are received to be sent to the server.
-
+        gesture_recognizer_to_socket (multiprocessing.Queue): A queue from which commands are received to be sent to the server.
+        flask_to_socket_queue (multiprocessing.Queue): A queue to send messages back to the Flask client.
+    Raises:
+        socket.timeout: If the connection to the server times out.
+    Returns:
+        None
     Behavior:
         - Connects to the server using SERVER_IP and SERVER_PORT.
         - Waits for commands from the queue, appends a delimiter '|', and sends them to the server.
@@ -29,19 +35,40 @@ def send_command_to_server(client_to_server_queue : "multiprocessing.Queue"):
         - Handles connection errors and prints error messages if the connection fails.
         - If the connection is lost, it will attempt to reconnect indefinitely.
     """
+    
+    
+    def handle_sigterm(signum, frame):
+        print("[INFO] received SIGTERM. Closing connection and exiting...")
+        sys.exit(0)
+    
+    
     # Print server connection details
     print(f"[INFO] Server IP: {SERVER_IP}, Port: {SERVER_PORT}")
+    # Create a signal handler for SIGTERM to gracefully close the connection
+    signal.signal(signal.SIGTERM, handle_sigterm)
+    s = None # Initialize socket to None to avoid UnboundLocalError in case of exception before connection
     while True:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                #s.settimeout(5)  # 5 seconds timeout for connection
                 s.connect((SERVER_IP, SERVER_PORT))
+                flask_to_socket_queue.put("[INFO] Connected to server successfully.")
                 while True:
                     # Wait for a command from the queue
-                    command = client_to_server_queue.get()
+                    command = gesture_recognizer_to_socket.get()
                     if command is None:
                         print("[INFO] Popped argument is None: received, exiting...")
                         return
                     print(f"[INFO] Sending command to server: {command}")
                     s.sendall(command.encode())
+        #except socket.timeout:
+        #    print("[ERROR] Connection to server timed out. Retrying...")
+        except SystemExit:
+            if s is not None:
+                try:
+                    s.shutdown(socket.SHUT_RDWR) # Not needed, but can be used to close the socket gracefully
+                except Exception:
+                    pass
+            raise # Pass the SystemExit exception to exit the process
         except Exception as e:
             print(f"[ERROR] Connection to server failed: {e}")

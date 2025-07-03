@@ -8,6 +8,7 @@ The application allows users to map gestures to commands, save configurations, a
 from the webcam in real-time.
 """
 import os
+import signal
 import json
 from flask import Flask, render_template, request, redirect, url_for, Response, jsonify
 import cv2
@@ -31,7 +32,8 @@ GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "IL
 gesture_to_command = {}
 
 # Queue for inter-process communication between client and Windows server.
-client_to_server_queue = None
+gesture_recognizer_to_socket = None
+flask_to_socket_queue = None
 
 
 
@@ -191,10 +193,10 @@ def start_recognition() -> "Response":
         webcam_frame_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
         global gesture_to_command
-        global client_to_server_queue
+        global gesture_recognizer_to_socket
         recognition_process = multiprocessing.Process(
             target=start_gesture_recognition,
-            args=(gesture_to_command, webcam_frame_queue, client_to_server_queue),
+            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket),
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
@@ -281,3 +283,42 @@ def video_feed() -> "Response":
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
+@app.route("/stop_client")
+def stop_client() -> "Response":
+    """
+    Flask route to stop the client application.
+    This route is used to terminate the client process gracefully.
+    It stops the gesture recognition process and returns a JSON response indicating success.
+    Args:
+        None
+    Returns:
+        Response: A JSON response indicating that the client has been stopped successfully.
+    """
+    global recognition_active
+    if recognition_active:
+        stop_recognition()
+    os.kill(os.getpid(), signal.SIGINT)
+    print("[INFO] Client process stopped.")
+    return jsonify({"status": "ok", "message": "Client stopped successfully."})
+
+@app.route("/check_server")
+def check_server() -> "Response":
+    """
+    Flask route to check if the server is running.
+    This route sends a request to the server and checks if it responds with a 200 OK status.
+    If the server is reachable, it returns a JSON response indicating success.
+    If the server is not reachable, it returns a JSON response indicating failure.
+    Args:
+        None
+    Returns:
+        Response: A JSON response indicating whether the server is running or not.
+    """
+    try:
+        # Send a request to the server to check if it's running
+        response = app.test_client().get("/")
+        if response.status_code == 200:
+            return jsonify({"status": "ok", "message": "Server is running."})
+        else:
+            return jsonify({"status": "error", "message": "Server is not running."}), 503
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
