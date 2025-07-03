@@ -238,7 +238,6 @@ def handle_client(conn, addr) -> None:
     print(f"[INFO] Connection from {addr}")
     try:
         with conn:
-            last_command = ""
             while True:
                 # Set a timeout for receiving data to avoid blocking indefinitely
                 data = conn.recv(1024)
@@ -253,7 +252,6 @@ def handle_client(conn, addr) -> None:
                 if not command:
                     continue
                     
-                print(f"[INFO] Last Command: {last_command}")
                 print(f"[RECEIVED] {command}")
                 
                 # Process the command
@@ -268,7 +266,7 @@ def handle_client(conn, addr) -> None:
                     simulate_media_play_pause()
                     response = "Media play/pause triggered"
                 elif command == "Open Calculator":
-                    if last_command == "Open Calculator" and calculator_already_running():
+                    if calculator_already_running():
                         print("[INFO] Calculator already running, skipping command")
                         continue
                     open_calculator()
@@ -283,7 +281,7 @@ def handle_client(conn, addr) -> None:
                     scroll_mouse(-120)
                     response = "Mouse scrolled down"
                 elif command == "Task Manager":
-                    if last_command == "Task Manager" and task_manager_already_running():
+                    if task_manager_already_running():
                         print("[INFO] Task Manager already running, skipping command")
                         continue
                     open_task_manager()
@@ -291,7 +289,6 @@ def handle_client(conn, addr) -> None:
                 else:
                     response = f"Unknown command: {command}"
                 
-                last_command = command
                 print(f"[RESPONSE] {response}")
     finally:
         # Deinitialize COM to clean up resources
