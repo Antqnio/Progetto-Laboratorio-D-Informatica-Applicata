@@ -316,6 +316,8 @@ def check_server() -> "Response":
     """
     global server_is_running
     if server_is_running.value:
+        print("[INFO] Server is running.")
         return jsonify({"status": "ok", "message": "Connection established."})
     else:
+        print("[ERROR] Server is not running.")
         return jsonify({"status": "error", "message": "Server is not running."}), 503

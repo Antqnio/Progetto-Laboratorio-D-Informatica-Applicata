@@ -259,16 +259,19 @@ async function checkIfServerIsRunning() {
         if (resp.ok) {  
             console.log("Server is running.");
             serverMessage.innerText = "Server is running.";
+            serverMessage.style.color ="rgb(79, 191, 39)";
             // clearInterval(SERVER_CHECK_TIMER);  // Stop checking if the server is running
             SERVER_CHECK_TIMER = null;  // Clear the timer variable
         }
         else {
             console.error("Server is not running or not reachable.");
-            serverMessage.innerText = SERVER_UNREACHABLE
+            serverMessage.innerText = SERVER_UNREACHABLE;
+            serverMessage.style.color ="rgb(178, 9, 9)";
         }
     } catch (err) {
         console.error("Network error while checking server status:", err);
         serverMessage.innerText = "Network error while checking server status.";
+        serverMessage.style.color ="rgb(178, 9, 9)";
     }
 }
 

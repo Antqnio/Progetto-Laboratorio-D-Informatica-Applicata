@@ -32,7 +32,7 @@ def main():
     flask_client.gesture_recognizer_to_socket_queue = gesture_recognizer_to_socket_queue
     
     # Initialize a single multiprocessing queue for communication between Flask client and send_command_to_server.py
-    server_is_running = multiprocessing.Value(ctypes.c_bool, True)  # Shared boolean
+    server_is_running = multiprocessing.Value(ctypes.c_bool, False)  # Shared boolean
     flask_client.server_is_running = server_is_running
     
     # Start a separate process to listen to the queue and send commands to the server

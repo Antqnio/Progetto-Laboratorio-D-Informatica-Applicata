@@ -1,7 +1,16 @@
 /* client/static/css/style.css */
 
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Root layout uses flex to keep footer at the bottom even when content is short */
 body {
-    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    font-family: 'JetBrains Mono', monospace;
     background-color: #f9f9f9;
     color: #222;
     padding: 20px;
@@ -100,6 +109,7 @@ button:hover,
     justify-content: space-between;
     align-items: flex-start;
     gap: 40px;
+    flex: 1; /* Occupies all available vertical space */
 }
 
 /* Left column: gestures binding */
@@ -140,9 +150,11 @@ button:hover,
 #message {
     text-align: center;
     font-size: 1.2rem;
-    color: #555;
+    color: #0047ab;
     margin-top: 20px;
     display: none; /* Initially hidden */
+    min-height: 1.5em; /* Reserve space to prevent footer shifting */
+    transition: all 0.3s ease;
 }
 
 .str-stp:disabled {
@@ -153,7 +165,6 @@ button:hover,
   border: 1px solid #aaa;   
 }
 
-
 #config-name:invalid {
     border: 2px solid red;
     background-color: #ffe6e6;
@@ -162,4 +173,50 @@ button:hover,
 #config-name:invalid:focus {
     outline: none;
     box-shadow: 0 0 5px red;
+}
+
+/* Footer stays at the bottom */
+footer {
+    text-align: center;
+    background-color: #f0f0f0;
+    padding: 0.5rem;
+    margin-top: auto;
+}
+
+#server-message {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: rgb(178, 9, 9);
+    background-color: #f0f4f8; 
+    padding: 10px 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+    white-space: pre-wrap; 
+}
+
+select, option, input[type="text"], button {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.gesture-row {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr; /* larghezza relativa per label e select */
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem; /* spazio orizzontale tra colonne */
+}
+
+.gesture-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap; /* impedisce a capo nel testo */
+}
+
+.gesture-row select {
+    width: 100%; /* select riempie la seconda colonna */
+    padding: 5px;
+    min-width: 150px;
+    font-family: 'JetBrains Mono', monospace; /* se vuoi mantenere il font anche qui */
 }

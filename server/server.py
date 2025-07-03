@@ -38,7 +38,7 @@ def calculator_already_running() -> bool:
         bool: True if a calculator application is running, False otherwise.
     """
     for proc in psutil.process_iter(['name']):
-        if proc.info['name'] and proc.info['name'].lower() in ["calculator.exe", "calc.exe", "calculatorapp.exe", "applicationframehost.exe"]:
+        if proc.info['name'] and proc.info['name'].lower() in ["calculator.exe", "calc.exe", "calculatorapp.exe"]:
             return True
     return False
 
