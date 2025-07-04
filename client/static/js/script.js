@@ -1,5 +1,39 @@
 "use strict";
 
+
+/**
+ * Sorts the options of the configuration name <select> element alphabetically by their text content.
+ * 
+ * This function locates the <select> element with the ID "config_name_select", retrieves its options,
+ * sorts them in ascending order based on their displayed text (handling numeric sorting),
+ * clears the existing options, and appends the sorted options back to the element.
+ * 
+ * If the target <select> element is not found, an error is logged and the function exits.
+ */
+function sortConfigNames() {
+
+    // Get the select element for configuration names
+    const configNameSelect = document.getElementById("config_name_select");
+    if (!configNameSelect) {
+        console.error("Configuration name select element not found.");
+        return;
+    }
+    // Get the options from the select element
+    const options = Array.from(configNameSelect.options);
+    // Sort the options alphabetically by their text content
+    // Using localeCompare to handle numeric sorting and case insensitivity
+    options.sort((a, b) => 
+    a.value.localeCompare(b.value, undefined, { numeric: true, sensitivity: 'base' })
+  );
+    // Clear the select element
+    configNameSelect.innerHTML = "";
+    // Append the sorted options back to the select element
+    options.forEach(option => {
+        configNameSelect.appendChild(option);
+    });
+}
+
+
 /**
  * Change the form fields based on the selected configuration file.
  * @param {Event} e - The change event from the select element.
@@ -57,6 +91,11 @@ async function sendFormDataToFlaskClient(e) {
     const submitter = e.submitter || document.activeElement;
     if (!submitter || submitter.name !== "action" || (submitter.value !== "apply" && submitter.value !== "save"))
         return;
+    const configNameInput = document.getElementById("config-name");
+    if (configNameInput && !configNameInput.value) {
+        alert("Please enter a configuration name.");
+        return;
+    }
     e.preventDefault();
 
     // Get the form element from the event
@@ -296,6 +335,9 @@ async function checkIfServerIsRunning() {
  * - save-btn
  */
 function init() {
+    // Sort the configuration names in the select element
+    sortConfigNames();
+
     // Add event listener for configuration name selection
     // This will trigger the changeFormFields function when the selected configuration changes
     const config_name_select = document.getElementById('config_name_select');

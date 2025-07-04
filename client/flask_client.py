@@ -14,6 +14,7 @@ from flask import Flask, render_template, request, redirect, url_for, Response, 
 import cv2
 import multiprocessing
 import ctypes
+import re
 from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
 from client_constants import COMMANDS
 
@@ -44,7 +45,18 @@ os.makedirs(CONFIG_DIR, exist_ok=True)
 
 
 def is_valid_config_name(name : str) -> bool:
-    return bool(re.match(r'^[a-zA-Z0-9_]+$', name))
+    """
+    Checks if the provided configuration name is valid.
+    A valid configuration name must:
+    - Be a non-empty string.
+    - Contain only alphanumeric characters and underscores.
+    Args:
+        name (str): The configuration name to validate.
+    Returns:
+        bool: True if the name is valid, False otherwise.
+    """
+    
+    return not(len(name) == 0) and bool(re.match(r'^[a-zA-Z0-9_]+$', name))
 
 
 
@@ -110,7 +122,7 @@ def index():
                 path = os.path.join(CONFIG_DIR, selected_config + ".json")
                 with open(path, "w") as f:
                     json.dump(gesture_to_command, f, indent=2)
-                return jsonify({"status": "ok", "message": "Configuration saved successfully."})
+                return jsonify({"status": "ok", "message": "Configuration saved and applied successfully."})
             else:
                 return jsonify({"status": "error", "message": "No selected configuration."}, 400)
         else:

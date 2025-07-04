@@ -35,7 +35,9 @@
 			"ms-python.vscode-pylance",
 			"ms-python.pylint",
 			"donjayamanne.python-extension-pack",
-			"formulahendry.code-runner"
+			"formulahendry.code-runner",
+			"ms-toolsai.jupyter",
+			"ms-vsliveshare.vsliveshare"
 			]
 		}
 	},
