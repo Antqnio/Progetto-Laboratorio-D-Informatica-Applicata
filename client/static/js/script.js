@@ -92,7 +92,7 @@ async function sendFormDataToFlaskClient(e) {
     if (!submitter || submitter.name !== "action" || (submitter.value !== "apply" && submitter.value !== "save"))
         return;
     const configNameInput = document.getElementById("config-name");
-    if (configNameInput && !configNameInput.value) {
+    if (submitter.value == "save" && configNameInput && !configNameInput.value) {
         alert("Please enter a configuration name.");
         return;
     }
@@ -160,6 +160,7 @@ async function sendFormDataToFlaskClient(e) {
                             return;
                         }
                     }
+                    configNameSelect.appendChild(option)
                 }
             }
             

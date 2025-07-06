@@ -56,7 +56,7 @@ def is_valid_config_name(name : str) -> bool:
         bool: True if the name is valid, False otherwise.
     """
     
-    return not(len(name) == 0) and bool(re.match(r'^[a-zA-Z0-9_]+$', name))
+    return len(name) > 0 and bool(re.match(r'^[a-zA-Z0-9_]+$', name))
 
 
 
@@ -111,6 +111,7 @@ def index():
                     del gesture_to_command[gesture]
             return jsonify({"status": "ok", "message": "Configuration applied successfully."})
         elif action == "save" and is_valid_config_name(selected_config):
+            print("[INFO] Valid configuration name")
             # Update gesture_to_command and saves configuration in a file
             for gesture in GESTURES:
                 print(f"[INFO] Processing gesture: {gesture}")
