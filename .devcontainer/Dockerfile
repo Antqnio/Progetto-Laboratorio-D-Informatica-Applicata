@@ -23,18 +23,14 @@ COPY docker_client_requirements.lock .
 RUN pip install --no-cache-dir -r docker_client_requirements.lock \ 
     && rm -f docker_client_requirements.lock
 
-# Copy and give execute permission to the start_client.sh script
-COPY start_client.sh .
-RUN chmod 755 start_client.sh
-
-# Copy the current directory contents
+# Copy the current directory contents 
 COPY . .
+
+# Give execute permission to the start_client.sh script
+RUN chmod 755 start_client.sh
 
 # Make port 9000 available
 EXPOSE 9000
 
 # Define environment variable (if needed)
 # ENV OPENCV_LOG_LEVEL=DEBUG
-
-# Run app.py when the container launches
-CMD ["python", "app.py"]
