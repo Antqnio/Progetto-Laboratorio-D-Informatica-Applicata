@@ -64,13 +64,26 @@ def get_master_volume() -> int:
     Returns:
         int: The current master volume level, scaled from 0 to 100.
     """
-    devices = AudioUtilities.GetSpeakers()
-    interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
-    volume = cast(interface, POINTER(IAudioEndpointVolume))
-    current_volume = volume.GetMasterVolumeLevelScalar()
-    return int(current_volume * 100)
+    try:
+        # Get the default audio output device (e.g., speakers or headphones)
+        devices = AudioUtilities.GetSpeakers()
 
-def simulate_volume_key(key : str, steps : int = 3) -> None:
+        # Activate the IAudioEndpointVolume interface for volume control
+        interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+
+        # Cast the interface pointer to IAudioEndpointVolume type
+        volume = cast(interface, POINTER(IAudioEndpointVolume))
+
+        # Get the current volume level as a scalar (0.0 to 1.0) and scale to 0–100
+        current_volume = volume.GetMasterVolumeLevelScalar()
+
+        return int(current_volume * 100)
+    except Exception as e:
+        print(f"[ERROR] Failed to get master volume: {e}")
+        return 0
+
+
+def simulate_volume_key(key: str, steps: int = 3) -> None:
     """
     Simulates pressing the system volume up or down key a specified number of times.
     Args:
@@ -81,18 +94,23 @@ def simulate_volume_key(key : str, steps : int = 3) -> None:
     Note:
         This function uses Windows-specific APIs via ctypes and will only work on Windows platforms.
     """
-    
+    # Virtual-Key codes for volume control
     VK_VOLUME_UP = 0xAF
     VK_VOLUME_DOWN = 0xAE
+
+    # Determine which key to simulate based on the input string
     if key == 'up':
         vk = VK_VOLUME_UP
     elif key == 'down':
         vk = VK_VOLUME_DOWN
     else:
+        # Invalid key, return without doing anything
         return
+
+    # Simulate key press and release for the specified number of steps
     for _ in range(steps):
-        ctypes.windll.user32.keybd_event(vk, 0, 0, 0)
-        ctypes.windll.user32.keybd_event(vk, 0, 2, 0)
+        ctypes.windll.user32.keybd_event(vk, 0, 0, 0)   # Key down
+        ctypes.windll.user32.keybd_event(vk, 0, 2, 0)   # Key up
 
 def volume_up() -> str:
     """
@@ -102,11 +120,15 @@ def volume_up() -> str:
     Returns:
         str: A message indicating whether the volume was increased or already at maximum.
     """
-    
-    if get_master_volume() < 100:
-        simulate_volume_key('up')
-        return "Volume increased"
-    return "Volume already at 100%"
+    try:
+        if get_master_volume() < 100:
+            simulate_volume_key('up')
+            return "Volume increased"
+        return "Volume already at 100%"
+    except Exception as e:
+        print(f"[ERROR] volume_up failed: {e}")
+        return "Volume increase failed"
+
 
 def volume_down() -> str:
     """
@@ -116,11 +138,15 @@ def volume_down() -> str:
     Returns:
         str: A message indicating whether the volume was decreased or already at 0%.
     """
-    
-    if get_master_volume() > 0:
-        simulate_volume_key('down')
-        return "Volume decreased"
-    return "Volume already at 0%"
+    try:
+        if get_master_volume() > 0:
+            simulate_volume_key('down')
+            return "Volume decreased"
+        return "Volume already at 0%"
+    except Exception as e:
+        print(f"[ERROR] volume_down failed: {e}")
+        return "Volume decrease failed"
+
 
 # Other commands
 def simulate_alt_tab() -> None:
@@ -136,17 +162,17 @@ def simulate_alt_tab() -> None:
     Note:
         This function is intended for use on Windows systems and requires the `ctypes` and `time` modules.
     """
-    
-    VK_MENU = 0x12
-    VK_TAB = 0x09
-    ctypes.windll.user32.keybd_event(VK_MENU, 0, 0, 0)
-    ctypes.windll.user32.keybd_event(VK_TAB, 0, 0, 0)
-    # Give some time to the user to select a window
-    # before releasing the keys, otherwise it will switch immediately
-    # to the next window without giving the user a chance to select one.
-    time.sleep(2.5)
-    ctypes.windll.user32.keybd_event(VK_TAB, 0, 2, 0)
-    ctypes.windll.user32.keybd_event(VK_MENU, 0, 2, 0)
+    try:
+        VK_MENU = 0x12
+        VK_TAB = 0x09
+        ctypes.windll.user32.keybd_event(VK_MENU, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_TAB, 0, 0, 0)
+        time.sleep(2.5)
+        ctypes.windll.user32.keybd_event(VK_TAB, 0, 2, 0)
+        ctypes.windll.user32.keybd_event(VK_MENU, 0, 2, 0)
+    except Exception as e:
+        print(f"[ERROR] simulate_alt_tab failed: {e}")
+
 
 def simulate_media_play_pause() -> None:
     """
@@ -160,13 +186,14 @@ def simulate_media_play_pause() -> None:
         None
     Note:
         This function is specific to Windows platforms and requires the `ctypes` module.
-    Raises:
-        AttributeError: If called on a non-Windows platform where `ctypes.windll.user32` is unavailable.
     """
-    
-    VK_MEDIA_PLAY_PAUSE = 0xB3
-    ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 0, 0)
-    ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 2, 0)
+    try:
+        VK_MEDIA_PLAY_PAUSE = 0xB3
+        ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, 0x0002, 0)
+    except Exception as e:
+        print(f"[ERROR] simulate_media_play_pause failed: {e}")
+
 
 def open_calculator() -> None:
     """
@@ -174,9 +201,11 @@ def open_calculator() -> None:
     This function launches 'calc.exe' using a subprocess and then pauses execution for 3 seconds.
     To give time for the application to open before proceeding with any further actions.
     """
-    
-    subprocess.Popen("calc.exe")
-    time.sleep(3)
+    try:
+        subprocess.Popen("calc.exe")
+        time.sleep(3)
+    except Exception as e:
+        print(f"[ERROR] Failed to open calculator: {e}")
 
 def simulate_print_screen() -> None:
     """
@@ -184,12 +213,15 @@ def simulate_print_screen() -> None:
     This function uses the Windows API to programmatically trigger the Print Screen
     key event, which captures the current screen to the clipboard.
     """
+    try:
+        VK_SNAPSHOT = 0x2C
+        ctypes.windll.user32.keybd_event(VK_SNAPSHOT, 0, 0, 0)
+        ctypes.windll.user32.keybd_event(VK_SNAPSHOT, 0, 2, 0)
+    except Exception as e:
+        print(f"[ERROR] simulate_print_screen failed: {e}")
 
-    VK_SNAPSHOT = 0x2C
-    ctypes.windll.user32.keybd_event(VK_SNAPSHOT, 0, 0, 0)
-    ctypes.windll.user32.keybd_event(VK_SNAPSHOT, 0, 2, 0)
 
-def scroll_mouse(amount : int) -> None:
+def scroll_mouse(amount: int) -> None:
     """
     Scrolls the mouse wheel by a specified amount.
 
@@ -199,8 +231,11 @@ def scroll_mouse(amount : int) -> None:
     Returns:
         None
     """
-    # amount: positive = up, negative = down
-    ctypes.windll.user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, amount, 0)
+    try:
+        ctypes.windll.user32.mouse_event(MOUSEEVENTF_WHEEL, 0, 0, amount, 0)
+    except Exception as e:
+        print(f"[ERROR] scroll_mouse failed: {e}")
+
 
 def open_task_manager() -> None:
     """
@@ -212,8 +247,10 @@ def open_task_manager() -> None:
     Returns:
         None
     """
-    
-    subprocess.Popen("taskmgr.exe", shell=True)
+    try:
+        subprocess.Popen("taskmgr.exe", shell=True)
+    except Exception as e:
+        print(f"[ERROR] Failed to open Task Manager: {e}")
 
 # TCP Server
 def handle_client(conn, addr) -> None:
