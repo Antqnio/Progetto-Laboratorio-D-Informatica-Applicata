@@ -1,9 +1,9 @@
 {
-  "Thumb_Up": "AltTab",
-  "Thumb_Down": "Task Manager",
-  "Open_Palm": "Open Calculator",
+  "Thumb_Up": "Volume Up",
+  "Thumb_Down": "Volume Down",
+  "Open_Palm": "Scroll Up",
   "Closed_Fist": "Volume Down",
-  "Victory": "Scroll Down",
-  "ILoveYou": "Volume Up",
-  "Pointing_Up": "Screenshot"
+  "Victory": "Task Manager",
+  "ILoveYou": "Screenshot",
+  "Pointing_Up": "Scroll Down"
 }

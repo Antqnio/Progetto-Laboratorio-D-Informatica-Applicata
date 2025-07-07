@@ -1,9 +1,9 @@
 {
-  "Thumb_Up": "Scroll Up",
-  "Thumb_Down": "Scroll Down",
-  "Open_Palm": "Screenshot",
-  "Closed_Fist": "Task Manager",
-  "Victory": "Volume Down",
-  "ILoveYou": "PlayPause",
-  "Pointing_Up": "Open Calculator"
+  "Thumb_Up": "Volume Up",
+  "Thumb_Down": "Volume Down",
+  "Open_Palm": "Task Manager",
+  "Closed_Fist": "Volume Up",
+  "Victory": "Open Calculator",
+  "ILoveYou": "Scroll Up",
+  "Pointing_Up": "Volume Down"
 }

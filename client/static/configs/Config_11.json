@@ -1,9 +1,9 @@
 {
   "Thumb_Up": "Volume Up",
-  "Thumb_Down": "-- No Command --",
-  "Open_Palm": "Screenshot",
-  "Closed_Fist": "PlayPause",
-  "Victory": "AltTab",
-  "ILoveYou": "Volume Down",
-  "Pointing_Up": "-- No Command --"
+  "Thumb_Down": "Volume Down",
+  "Open_Palm": "Volume Up",
+  "Closed_Fist": "Scroll Up",
+  "Victory": "Volume Up",
+  "ILoveYou": "PlayPause",
+  "Pointing_Up": "Open Calculator"
 }

@@ -1,9 +1,9 @@
 {
-  "Thumb_Up": "AltTab",
-  "Thumb_Down": "Scroll Up",
-  "Open_Palm": "PlayPause",
-  "Closed_Fist": "Volume Up",
-  "Victory": "AltTab",
-  "ILoveYou": "Scroll Up",
-  "Pointing_Up": "Scroll Down"
+  "Thumb_Up": "Screenshot",
+  "Thumb_Down": "Open Calculator",
+  "Open_Palm": "Scroll Up",
+  "Closed_Fist": "Scroll Down",
+  "Victory": "Scroll Up",
+  "ILoveYou": "Scroll Down",
+  "Pointing_Up": "Screenshot"
 }

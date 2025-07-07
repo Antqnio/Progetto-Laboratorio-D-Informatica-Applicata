@@ -1,9 +1,9 @@
 {
-  "Thumb_Up": "Scroll Up",
-  "Thumb_Down": "Screenshot",
-  "Open_Palm": "Task Manager",
-  "Closed_Fist": "Scroll Down",
-  "Victory": "PlayPause",
+  "Thumb_Up": "Screenshot",
+  "Thumb_Down": "Scroll Down",
+  "Open_Palm": "Scroll Down",
+  "Closed_Fist": "Scroll Up",
+  "Victory": "AltTab",
   "ILoveYou": "Screenshot",
-  "Pointing_Up": "PlayPause"
+  "Pointing_Up": "Volume Up"
 }
