@@ -8,21 +8,21 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 ## Project Structure
 ```
 .
-├── client/                # Client application (Flask + JS + HTML/CSS)
-│   ├── main.py            # Flask server entry point
-│   ├── flask_client.py    # Flask backend logic
-│   ├── send_command_to_server.py # Sends commands to the TCP server
-│   ├── src/gesture_recognizer/   # Gesture recognition module
-│   ├── static/            # Static files (JS, CSS, images)
-│   └── templates/         # HTML templates (index.html)
-├── server/                # TCP server for system command execution
-│   ├── server.py          # TCP server logic
+├── client/                         # Client application (Flask + JS + HTML/CSS)
+│   ├── main.py                     # Flask server entry point
+│   ├── flask_client.py             # Flask backend logic
+│   ├── send_command_to_server.py   # Sends commands to the TCP server
+│   ├── src/gesture_recognizer/     # Gesture recognition module
+│   ├── static/                     # Static files (JS, CSS, images)
+│   └── templates/                  # HTML templates (index.html)
+├── server/                         # TCP server for system command execution
+│   ├── server.py                   # TCP server logic
 │   └── server_requirements.txt
-├── statistics/            # Notebooks for statistics and analysis
-├── start_client.sh        # Script to start the client (Linux/Mac/WSL)
-├── start_server.ps1       # Script to start the server (Windows PowerShell)
-├── webcam_enable.ps1      # Script to enable webcam in WSL
-├── .devcontainer/         # Devcontainer configuration for VS Code
+├── statistics/                     # Notebooks for statistics and analysis
+├── start_client.sh                 # Script to start the client (Linux/Mac/WSL)
+├── start_server.ps1                # Script to start the server (Windows PowerShell)
+├── webcam_enable.ps1               # Script to enable webcam in WSL
+├── .devcontainer/                  # Devcontainer configuration for VS Code
 └── README.md
 ```
 ## Requirements
