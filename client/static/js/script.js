@@ -1,6 +1,4 @@
 "use strict";
-
-
 /**
  * Sorts the options of the configuration name <select> element alphabetically by their text content.
  * 
@@ -10,6 +8,11 @@
  * 
  * If the target <select> element is not found, an error is logged and the function exits.
  */
+
+const COBALT_BLUE = "#0047ab";
+const RED = "rgb(178, 9, 9)";
+let gestureFeedbackTimer;
+
 function sortConfigNames() {
 
     // Get the select element for configuration names
@@ -136,6 +139,7 @@ async function sendFormDataToFlaskClient(e) {
             // If the action is "apply", we display a success message for applying the configuration
             const p = document.getElementById("message");
             p.textContent = data.message || (submitter.value === "save" ? "Configuration saved!" : "Configuration applied!");
+            p.style.color = COBALT_BLUE;
             p.style.display = "block";
             // Hide the message after 3 seconds
             setTimeout(() => {
@@ -181,6 +185,46 @@ async function sendFormDataToFlaskClient(e) {
 };
 
 /**
+ * Fetches the latest recognized gesture from the server and updates the on‑page message.
+ *
+ * Sends a GET request to the `/get_recognized_gesture` endpoint.  
+ * • If the response is OK, logs the gesture to the console,  
+ *   updates the `<p id="message">` text to the returned gesture,  
+ *   and colors it in COBALT_BLUE.  
+ * • If the response is not OK, logs an error and colors the message in RED.  
+ * • On network failure, logs the error, sets the message text to a network‑error notice,  
+ *   and colors it in RED.
+ *
+ * @async
+ * @function gestureFeedback
+ * @returns {Promise<void>} Resolves once the message element has been updated.
+ */
+async function gestureFeedback() {
+    
+    const message = document.getElementById("message");
+    try {
+        const resp = await fetch("/get_recognized_gesture");
+        if (resp.ok) {
+            const data = await resp.json();
+            console.log("Recognized Gesture:", data.message);
+            message.innerText = data.message ? data.message : "No gesture recognized";
+            message.style.color = COBALT_BLUE;
+        }
+        else {
+            console.error("Occurred error while trying to get gesture feedback:", resp.message);
+            message.style.color = RED;
+        }
+    } catch (err) {
+        console.error("Network error while checking trying to communicate with Flask client:", err);
+        message.innerText = "Network error while checking trying to communicate with Flask client.";
+        message.style.color = RED;
+    }
+    message.style.display = "block";
+}
+
+
+
+/**
  * Starts the recognition process by sending a request to the server and updating the UI accordingly.
  *
  * @async
@@ -214,6 +258,10 @@ async function startRecognition(startBtn, stopBtn, statusElem, videoElem, applyB
         videoElem.src = "/video_feed?ts=" + Date.now();
         applyBtn.disabled = true;
         saveBtn.disabled = true;
+        // Show the recognized gesture in a <p>
+        gestureFeedbackTimer = setInterval(async () => {
+            await gestureFeedback();
+        }, 333);
     }
 }
 
@@ -243,7 +291,11 @@ async function stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBt
         videoElem.src = "";
         applyBtn.disabled = false;
         saveBtn.disabled = false;
-
+        // Interrupt showing gesture feedback
+        clearInterval(gestureFeedbackTimer);
+        const message = document.getElementById("message");
+        // Hide message
+        message.style.display = "none";
     }
 }
 
@@ -315,6 +367,7 @@ async function checkIfServerIsRunning() {
     }
 }
 
+
     
 /**
  * Initializes event listeners and UI logic for the configuration form and webcam recognition controls.
@@ -336,6 +389,11 @@ async function checkIfServerIsRunning() {
  * - save-btn
  */
 function init() {
+    // Sort the configuration names in the select element
+    sortConfigNames();
+
+    // Add event listener for configuration name selection
+    // This will trigger the changeFormFields function when the selefunction init() {
     // Sort the configuration names in the select element
     sortConfigNames();
 
@@ -390,11 +448,11 @@ function init() {
     // Set the initial message for the server status
     serverMessage.textContent = SERVER_UNREACHABLE;
     // Check if the server is running when the page loads
-    SERVER_CHECK_TIMER = setInterval(() => {
+    SERVER_CHECK_TIMER = setInterval(async () => {
         // Check if the server is running every 5 seconds
-        checkIfServerIsRunning();
+        await checkIfServerIsRunning();
     }, 5000);
-
+    
 }
 
 // Wait for the DOM to be fully loaded before initializing

@@ -17,6 +17,7 @@ import ctypes
 import re
 from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
 from client_constants import COMMANDS
+from queue import Empty
 
 # Flask app setup
 app = Flask(
@@ -180,8 +181,12 @@ recognition_active = False
 recognition_process = None
 
 # Queue for webcam frames
-# This queue will be used to send frames from the webcam to the gesture recognition process.
+# This queue will be used to send webcam frames from the gesture recognition process to flask_client.py
 webcam_frame_queue = None
+
+# Queue for recognized gestures
+flask_to_web_interface_queue = None
+# This queue will be used to send recognized gestures from gesture_recognizer.py to flask_client.py
 
 
 @app.route("/start")
@@ -202,15 +207,17 @@ def start_recognition() -> "Response":
 
     if not recognition_active:
         recognition_active = True
-        # Initialize queue for inter-process communication
+        # Initialize queues for inter-process communication
         global webcam_frame_queue
         webcam_frame_queue = multiprocessing.Queue()
+        global flask_to_web_interface_queue
+        flask_to_web_interface_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
         global gesture_to_command
         global gesture_recognizer_to_socket_queue
         recognition_process = multiprocessing.Process(
             target=start_gesture_recognition,
-            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket_queue),
+            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket_queue, flask_to_web_interface_queue,),
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
@@ -238,13 +245,17 @@ def stop_recognition() -> "Response":
         return jsonify({"status": "no", "active": False})
     recognition_active = False
     
-    # If the recognition process is still running, terminate it
+    # If the recognition process is still running, terminate it and its associated queues with flask_client.py
     if recognition_process and recognition_process.is_alive():
         recognition_process.terminate()
         print("[INFO] Stopping recognition...")
         global webcam_frame_queue
         webcam_frame_queue.close()
         webcam_frame_queue.join_thread()
+        global flask_to_web_interface_queue
+        flask_to_web_interface_queue.close()
+        # Set flask_to_web_interface_queue to None to "block" "/get_recognized_gesture" route.
+        flask_to_web_interface_queue.join_thread()
         recognition_process = None
         print("[INFO] Gesture recognition process stopped.")
 
@@ -334,3 +345,41 @@ def check_server() -> "Response":
     else:
         print("[ERROR] Server is not running.")
         return jsonify({"status": "error", "message": "Server is not running."}), 503
+    
+@app.route("/get_recognized_gesture")
+def send_recognized_gesture() -> "Response":
+    """
+    Retrieve the latest recognized gesture from the background recognizer.
+
+    Attempts to pull a value from the global `flask_to_web_interface_queue` without blocking.
+    - If the queue is not initialized, returns a 503 error.
+    - If the queue is empty, returns `"gesture": null`.
+    - If a gesture is available, returns it immediately.
+
+    JSON response format (200 OK):
+        {
+            "status": "ok",
+            "gesture": <string|null>
+        }
+
+    Error response (503 Service Unavailable):
+        {
+            "status": "error",
+            "message": "Gesture recognizer process is not running."
+        }
+    """
+    global recognition_active
+    if recognition_active is False:
+        print("[DEBUG] Recognition process is not active (send_recognized_gesture())")
+        return jsonify({"status": "error", "message": "Gesture recognizer process is not running."}), 503
+    global flask_to_web_interface_queue
+    print("[INFO] Sending recognized gesture to web interface")
+    try:
+        # Non‐blocking retrieval; raises queue.Empty if nothing is available
+        print("[DEBUG] In send_recognized_gesture() try block")
+        gesture = flask_to_web_interface_queue.get(block=False)
+        print(f"[INFO] Recognized gesture: {gesture} (flask_client.py)")
+    except Empty:
+        gesture = None
+        print("[INFO] No gesture recognized (flask_client.py)")
+    return jsonify({"status": "ok", "message": gesture})
