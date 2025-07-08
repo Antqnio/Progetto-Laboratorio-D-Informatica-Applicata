@@ -11,7 +11,7 @@
 
 const COBALT_BLUE = "#0047ab";
 const RED = "rgb(178, 9, 9)";
-let gestureFeedbackTimer;
+let gestureFeedbackTimer = null;
 
 function sortConfigNames() {
 
@@ -200,26 +200,30 @@ async function sendFormDataToFlaskClient(e) {
  * @returns {Promise<void>} Resolves once the message element has been updated.
  */
 async function gestureFeedback() {
-    
+    if (!gestureFeedbackTimer)
+        return;
     const message = document.getElementById("message");
     try {
         const resp = await fetch("/get_recognized_gesture");
         if (resp.ok) {
             const data = await resp.json();
             console.log("Recognized Gesture:", data.message);
-            message.innerText = data.message ? data.message : "No gesture recognized";
+            if (!data.message || data.message == "None")
+                message.innerText = "No gesture recognized";
+            else
+                message.innerText = data.message;
             message.style.color = COBALT_BLUE;
+            message.style.display = "block";
         }
         else {
             console.error("Occurred error while trying to get gesture feedback:", resp.message);
-            message.style.color = RED;
+            message.style.display = "none";
         }
     } catch (err) {
         console.error("Network error while checking trying to communicate with Flask client:", err);
-        message.innerText = "Network error while checking trying to communicate with Flask client.";
-        message.style.color = RED;
+        message.style.display = "none";
     }
-    message.style.display = "block";
+    
 }
 
 
@@ -293,6 +297,7 @@ async function stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBt
         saveBtn.disabled = false;
         // Interrupt showing gesture feedback
         clearInterval(gestureFeedbackTimer);
+        gestureFeedbackTimer = null;
         const message = document.getElementById("message");
         // Hide message
         message.style.display = "none";

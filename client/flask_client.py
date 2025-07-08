@@ -38,6 +38,10 @@ gesture_recognizer_to_socket_queue = None
 # Boolean value to indicate if the server is running. This will be updated by the send_command_to_server function.
 server_is_running = multiprocessing.Value(ctypes.c_bool, True)
 
+# multiprocessing.Array for inter-process communication between gesture_recognizer.py and flask_client.py
+# gesture_recognizer.py will write the last recognized gesture in last_gesture multiprocessing.Array and
+# flask_client.py will send it to the web interface.
+last_gesture = None
 
 
 # Directory to store configuration files
@@ -210,14 +214,17 @@ def start_recognition() -> "Response":
         # Initialize queues for inter-process communication
         global webcam_frame_queue
         webcam_frame_queue = multiprocessing.Queue()
-        global flask_to_web_interface_queue
-        flask_to_web_interface_queue = multiprocessing.Queue()
+        global last_gesture
+        # 11 is the max string length in GESTURES list. +1 for \0
+        last_gesture = multiprocessing.Array(ctypes.c_char, 11+1)
+        # global flask_to_web_interface_queue
+        # flask_to_web_interface_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
         global gesture_to_command
         global gesture_recognizer_to_socket_queue
         recognition_process = multiprocessing.Process(
             target=start_gesture_recognition,
-            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket_queue, flask_to_web_interface_queue,),
+            args=(gesture_to_command, webcam_frame_queue, gesture_recognizer_to_socket_queue, last_gesture,),
         )
         recognition_process.start()
         print("[INFO] Gesture recognition process started.")
@@ -252,10 +259,6 @@ def stop_recognition() -> "Response":
         global webcam_frame_queue
         webcam_frame_queue.close()
         webcam_frame_queue.join_thread()
-        global flask_to_web_interface_queue
-        flask_to_web_interface_queue.close()
-        # Set flask_to_web_interface_queue to None to "block" "/get_recognized_gesture" route.
-        flask_to_web_interface_queue.join_thread()
         recognition_process = None
         print("[INFO] Gesture recognition process stopped.")
 
@@ -372,14 +375,10 @@ def send_recognized_gesture() -> "Response":
     if recognition_active is False:
         print("[DEBUG] Recognition process is not active (send_recognized_gesture())")
         return jsonify({"status": "error", "message": "Gesture recognizer process is not running."}), 503
-    global flask_to_web_interface_queue
+    global last_gesture
     print("[INFO] Sending recognized gesture to web interface")
-    try:
-        # Non‐blocking retrieval; raises queue.Empty if nothing is available
-        print("[DEBUG] In send_recognized_gesture() try block")
-        gesture = flask_to_web_interface_queue.get(block=False)
-        print(f"[INFO] Recognized gesture: {gesture} (flask_client.py)")
-    except Empty:
-        gesture = None
-        print("[INFO] No gesture recognized (flask_client.py)")
+    # Legge la stringa dalla memoria condivisa
+    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Rimuove zeri finali
+    gesture = raw_bytes.decode()
+    print(f"[INFO] Recognized gesture: {gesture} (flask_client.py)")
     return jsonify({"status": "ok", "message": gesture})

@@ -43,7 +43,7 @@ def make_sigterm_handler(cap) -> "callable":
         sys.exit(0)
     return handle_sigterm
 
-def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiprocessing.Queue", client_to_server_queue: "multiprocessing.Queue", flask_to_web_interface_queue: "multiprocessing.Queue") -> None:
+def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiprocessing.Queue", client_to_server_queue: "multiprocessing.Queue", last_gesture: "multiprocessing.Array") -> None:
     """
     Starts real-time gesture recognition using a webcam and sends associated commands to a server.
     This function initializes a MediaPipe gesture recognizer, captures video frames from the webcam,
@@ -54,7 +54,7 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
         gesture_to_command (dict): A dictionary mapping gesture category names (str) to command strings. If None or empty, the gestures will be captured without sending commands to server
         webcam_queue (multiprocessing.Queue): Queue to send captured webcam frames to the Flask client.
         client_to_server_queue (multiprocessing.Queue): Queue to send recognized commands to the server.
-        flask_to_web_interface_queue (multiprocessing.Queue): Queue to send recognized gestures to the Flask client.
+        last_gesture (multiprocessing.Array): Last gesture recognized. This array will be used to communicate that last gesture to flask_client.py.
     Returns:
         None
     Raises:
@@ -80,6 +80,7 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
 
     print("[INFO] gesture_to_command: {}".format(gesture_to_command))
     
+    
     # Count the number of recognized gestures to reduce command spamming.
     # When the number of recognized gestures is a multiple of 10, the command is sent to the server.
     counter = 0
@@ -101,6 +102,25 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
             - Only gestures with a mapped command in `COMMANDS` are sent.
             - If no gestures are recognized, an informational message is printed.
         """
+        def save_last_gesture(recognized_gesture) -> None:
+            """
+            Saves the latest recognized gesture into the shared memory buffer `last_gesture`.
+
+            This function first clears the existing contents of the buffer by setting each byte to null (`\x00`),
+            then writes the new gesture string byte by byte into the buffer.
+
+            Args:
+                recognized_gesture (str or bytes): The gesture to store. Can be a string or a bytes-like object.
+            Returns:
+                None
+            """
+            # Empty the buffer
+            for i in range(len(last_gesture)):
+                last_gesture[i] = b'\x00'
+            # Write the new gesture
+            for i, char in enumerate(recognized_gesture):
+                last_gesture[i] = char.encode() if isinstance(char, str) else char
+                
         nonlocal counter
         counter += 1
         if counter % 10 != 0:
@@ -110,23 +130,24 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
             for classification in gesture_list:
                 if classification.category_name is not None:
                     # Extract the recognized gesture
-                    gesture = classification.category_name
+                    recognized_gesture = classification.category_name
+                    save_last_gesture(recognized_gesture)
                     if gesture_to_command is None or not gesture_to_command:
                         print("[INFO] gesture_to_command is empty. Sending recognized gesture to flask_client.py...")
-                        flask_to_web_interface_queue.put(gesture)
                         continue
-                    if gesture_to_command.get(gesture) is None:
-                        print(f"[INFO] Gesture '{gesture}' not mapped to any command.")
+                    if gesture_to_command.get(recognized_gesture) is None:
+                        print(f"[INFO] Gesture '{recognized_gesture}' not mapped to any command.")
                         continue
                     # Send the recognized gesture to the flask client:
-                    flask_to_web_interface_queue.put(gesture)
+                    # save_last_gesture(recognized_gesture)
                     # Send the associated command to the send_command_to_server.py module:
-                    command = gesture_to_command.get(gesture)
+                    command = gesture_to_command.get(recognized_gesture)
                     if command in COMMANDS:
                         print(f"[INFO] Sending associated command: {command}")
                         client_to_server_queue.put(command)
         # If there are no gestures recognized, print a message:
         if not result.gestures:
+            save_last_gesture("None")
             print("[INFO] No gesture recognized (gesture_recognizer.py)")
 
     # Create the GestureRecognizerOptions with the model path and result callback.
