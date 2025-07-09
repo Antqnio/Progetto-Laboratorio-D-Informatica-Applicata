@@ -114,12 +114,12 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
             Returns:
                 None
             """
-            # Empty the buffer
-            for i in range(len(last_gesture)):
-                last_gesture[i] = b'\x00'
             # Write the new gesture
             for i, char in enumerate(recognized_gesture):
                 last_gesture[i] = char.encode() if isinstance(char, str) else char
+            # Empty the remaining parts of the buffer
+            for i in range(len(recognized_gesture), len(last_gesture)):
+                last_gesture[i] = b'\x00'
                 
         nonlocal counter
         counter += 1

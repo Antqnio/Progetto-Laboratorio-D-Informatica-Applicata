@@ -145,7 +145,7 @@ def index():
         selected_config=selected_config
     )
 
-@app.route("/get_json_file")
+@app.route("/get_json_file", methods=["GET"])
 def get_json_file() -> "Response":
     """
     Flask route to serve a JSON file from the static/configs directory.
@@ -193,7 +193,7 @@ flask_to_web_interface_queue = None
 # This queue will be used to send recognized gestures from gesture_recognizer.py to flask_client.py
 
 
-@app.route("/start")
+@app.route("/start", methods=["GET"])
 def start_recognition() -> "Response":
     """
     Starts the gesture recognition process if it is not already active.
@@ -230,7 +230,7 @@ def start_recognition() -> "Response":
         print("[INFO] Gesture recognition process started.")
     return jsonify({"status": "ok", "active": True})
 
-@app.route("/stop")
+@app.route("/stop", methods=["GET"])
 def stop_recognition() -> "Response":
     """
     Stops the gesture recognition process if it is currently active.
@@ -264,7 +264,7 @@ def stop_recognition() -> "Response":
 
     return jsonify({"status": "ok", "active": False})
 
-@app.route("/video_feed")
+@app.route("/video_feed", methods=["GET"])
 def video_feed() -> "Response":
     """
     Route that streams video frames from the server to the client as an MJPEG stream.
@@ -311,7 +311,7 @@ def video_feed() -> "Response":
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-@app.route("/stop_client")
+@app.route("/stop_client", methods=["GET"])
 def stop_client() -> "Response":
     """
     Flask route to stop the client application.
@@ -329,7 +329,7 @@ def stop_client() -> "Response":
     print("[INFO] Client process stopped.")
     return jsonify({"status": "ok", "message": "Client stopped successfully."})
 
-@app.route("/check_server")
+@app.route("/check_server", methods=["GET"])
 def check_server() -> "Response":
     """
     Flask route to check if the server is running.
@@ -349,7 +349,7 @@ def check_server() -> "Response":
         print("[ERROR] Server is not running.")
         return jsonify({"status": "error", "message": "Server is not running."}), 503
     
-@app.route("/get_recognized_gesture")
+@app.route("/get_recognized_gesture", methods=["GET"])
 def send_recognized_gesture() -> "Response":
     """
     Retrieve the latest recognized gesture from the background recognizer.
