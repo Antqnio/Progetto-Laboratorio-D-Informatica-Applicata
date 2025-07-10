@@ -217,11 +217,11 @@ async function gestureFeedback() {
         }
         else {
             console.error("Occurred error while trying to get gesture feedback:", resp.message);
-            message.style.display = "none";
+            // message.style.display = "none";
         }
     } catch (err) {
         console.error("Network error while checking trying to communicate with Flask client:", err);
-        message.style.display = "none";
+        // message.style.display = "none";
     }
     
 }
@@ -293,14 +293,27 @@ async function stopRecognition(startBtn, stopBtn, statusElem, videoElem, applyBt
         startBtn.style.display = "inline-block";
         videoElem.style.display = "none";
         videoElem.src = "";
-        applyBtn.disabled = false;
-        saveBtn.disabled = false;
         // Interrupt showing gesture feedback
         clearInterval(gestureFeedbackTimer);
         gestureFeedbackTimer = null;
         const message = document.getElementById("message");
         // Hide message
-        message.style.display = "none";
+        message.style.display = "block";
+        // Wait 4s before enabling startBtn, applyBtn and saveBtn to allow the webcam to close properly
+        startBtn.disabled = true;
+        let seconds = 4
+        startBtn.disabled = true;
+        const timer = setInterval(() => {
+            message.innerText = `Please, wait for webcam deactivation (${seconds})`;
+            seconds--;
+            if (seconds < 0) {
+                clearInterval(timer);
+                message.style.display = "none"; // oppure svuota: message.innerText = "";
+                startBtn.disabled = false;
+                applyBtn.disabled = false;
+                saveBtn.disabled = false;
+            }
+        }, 1000) // Call every second
     }
 }
 
