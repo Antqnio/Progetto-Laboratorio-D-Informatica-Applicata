@@ -27,8 +27,14 @@ app = Flask(
 )
 
 
-# List of available gestures
-GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
+# List of available gestures (grouped: like/dislike, one/two/three/four, peace/peace_inverted, stop/stop_inverted, etc.)
+GESTURES = (
+    'like', 'dislike',
+    'one', 'two_up', 'two_up_inverted', 'three', 'three2', 'four',
+    'peace', 'peace_inverted',
+    'stop', 'stop_inverted',
+    'fist', 'palm', 'mute', 'rock', 'call', 'ok'
+)
 
 # Gesture-command mapping
 gesture_to_command = {}
@@ -215,8 +221,8 @@ def start_recognition() -> "Response":
         global webcam_frame_queue
         webcam_frame_queue = multiprocessing.Queue()
         global last_gesture
-        # 11 is the max string length in GESTURES list. +1 for \0
-        last_gesture = multiprocessing.Array(ctypes.c_char, 11+1)
+        # 24 is the max string length in new gesture categories. +1 for \0
+        last_gesture = multiprocessing.Array(ctypes.c_char, 14+1)
         # global flask_to_web_interface_queue
         # flask_to_web_interface_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument

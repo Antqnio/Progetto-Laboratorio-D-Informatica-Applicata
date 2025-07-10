@@ -95,13 +95,24 @@
                                 The icon is displayed before the gesture name in the label.
                             -->
                             <span class="gesture-icon">
-                                {% if gesture == "Thumb_Up" %}👍
-                                {% elif gesture == "Thumb_Down" %}👎
-                                {% elif gesture == "Open_Palm" %}🖐️
-                                {% elif gesture == "Closed_Fist" %}✊
-                                {% elif gesture == "Victory" %}✌️
-                                {% elif gesture == "ILoveYou" %}🤟
-                                {% elif gesture == "Pointing_Up" %}👆
+                                {% if gesture == "like" %}👍
+                                {% elif gesture == "dislike" %}👎
+                                {% elif gesture == "one" %}👆
+                                {% elif gesture == "two_up" %}✌️
+                                {% elif gesture == "two_up_inverted" %}✌️
+                                {% elif gesture == "three" %}🤟
+                                {% elif gesture == "three2" %}🖖
+                                {% elif gesture == "four" %}🖐️
+                                {% elif gesture == "peace" %}✌️
+                                {% elif gesture == "peace_inverted" %}✌️
+                                {% elif gesture == "stop" %}🤚
+                                {% elif gesture == "stop_inverted" %}🤚
+                                {% elif gesture == "fist" %}✊
+                                {% elif gesture == "palm" %}🖐️
+                                {% elif gesture == "mute" %}🤫
+                                {% elif gesture == "rock" %}🤘
+                                {% elif gesture == "call" %}🤙
+                                {% elif gesture == "ok" %}👌
                                 {% else %}❓
                                 {% endif %}
                             </span>
