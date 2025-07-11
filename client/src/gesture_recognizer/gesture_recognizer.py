@@ -16,10 +16,12 @@ import time as tm
 import multiprocessing
 import signal
 import sys
+import torch
+import torch.nn as nn
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from send_command_to_server import send_command_to_server
-from client_constants import COMMANDS
+from client_constants import COMMANDS, GESTURES as class_names
 
 def make_sigterm_handler(cap) -> "callable":
     """
@@ -69,20 +71,38 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
 
 
     # Prepare the MediaPipe model path
-    model_path = os.path.join(os.path.dirname(__file__), "gesture_recognizer.task")
+    model_path = os.path.join(os.path.dirname(__file__), "handnet_two_hands.pth")
     
-    # Initialize MediaPipe tasks and options
-    BaseOptions = mp.tasks.BaseOptions
-    GestureRecognizer = mp.tasks.vision.GestureRecognizer
-    GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
-    GestureRecognizerResult = mp.tasks.vision.GestureRecognizerResult
-    VisionRunningMode = mp.tasks.vision.RunningMode
+    # Model parameters
+    num_classes = 19  # stesso valore usato nel training
+    # Two hands → 21 landmarks × 3 coords × 2 = 126 inputs
+    input_size   = 21 * 3 * 2
+    hidden_size  = 128
+    # Model
+    class HandNet(nn.Module):
+        def __init__(self, input_size=63, hidden_size=128, num_classes=19):
+            super(HandNet, self).__init__()
+            self.net = nn.Sequential(
+                nn.Linear(input_size, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, num_classes)
+        )
+        def forward(self, x):
+            return self.net(x)
+
+    # Load model
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = HandNet(input_size=input_size, hidden_size=hidden_size, num_classes=num_classes).to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.eval()
 
     print("[INFO] gesture_to_command: {}".format(gesture_to_command))
     
     # Separate Mediapipe hands for drawing landmarks on frame
     mp_hands = mp.solutions.hands
-    hands_draw = mp_hands.Hands(static_image_mode=False, max_num_hands=2)
+    hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5)
     mp_draw = mp.solutions.drawing_utils
     
     # Shared state for visualization (not needed due to AJAX)
@@ -92,13 +112,11 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
     # When the number of recognized gestures is a multiple of 10, the command is sent to the server.
     counter = 0
 
-    def get_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int) -> None:
+    def send_result(recognized_gesture: str) -> None:
         """
         Processes the gesture recognition result, sending recognized gesture commands to the server at specified intervals.
         Args:
             result (GestureRecognizerResult): The result object containing recognized gestures.
-            output_image (mp.Image): The output image associated with the recognition (unused in this function).
-            timestamp_ms (int): The timestamp in milliseconds when the result was produced.
         Side Effects:
             - Increments a nonlocal counter to control the frequency of command sending.
             - Sends recognized gesture commands to the server via `client_to_server_queue` every 10th call.
@@ -132,145 +150,125 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
         counter += 1
         if counter % 10 != 0:
             return
-        # Print all recognized category_names:
-        for gesture_list in result.gestures:
-            for classification in gesture_list:
-                if classification.category_name is not None:
-                    # Extract the recognized gesture
-                    recognized_gesture = classification.category_name
-                    save_last_gesture(recognized_gesture)
-                    if gesture_to_command is None or not gesture_to_command:
-                        print("[INFO] gesture_to_command is empty. Sending recognized gesture to flask_client.py...")
-                        continue
-                    if gesture_to_command.get(recognized_gesture) is None:
-                        print(f"[INFO] Gesture '{recognized_gesture}' not mapped to any command.")
-                        continue
-                    # Send the recognized gesture to the flask client:
-                    # save_last_gesture(recognized_gesture)
-                    # Send the associated command to the send_command_to_server.py module:
-                    command = gesture_to_command.get(recognized_gesture)
-                    if command in COMMANDS:
-                        print(f"[INFO] Sending associated command: {command}")
-                        client_to_server_queue.put(command)
-        # If there are no gestures recognized, print a message:
-        if not result.gestures:
-            save_last_gesture("None")
-            print("[INFO] No gesture recognized (gesture_recognizer.py)")
-
-    # Create the GestureRecognizerOptions with the model path and result callback.
-    # The result callback is called every time a gesture is recognized.
-    # The running mode is set to LIVE_STREAM to process frames from the webcam.
-    # The number of hands is set to 2 to recognize gestures from both hands.
-    # The model asset path is set to the path of the gesture recognizer model file.
-    options = GestureRecognizerOptions(
-        base_options=BaseOptions(model_asset_path=model_path),
-        running_mode=VisionRunningMode.LIVE_STREAM,
-        result_callback=get_result,
-        num_hands=2
-    )
-    
-    
-
-    with GestureRecognizer.create_from_options(options) as recognizer:
-        # Select a webcam to capture video from.
-        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
-        # Register the SIGTERM signal handler to release the webcam and close OpenCV windows.
-        signal.signal(signal.SIGTERM, make_sigterm_handler(cap))
-        # Set the video codec, frame width, and height.
-        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        # cap.set(cv2.CAP_PROPFPS, 30)
-
-        if not cap.isOpened():
-            print("[INFO] Webcam is not opened. Please check your webcam connection.")
+        save_last_gesture(recognized_gesture)
+        if gesture_to_command is None or not gesture_to_command:
+            print(f"[INFO] gesture_to_command is empty. Sending recognized gesture ({recognized_gesture}) to flask_client.py...")
             return
+        if gesture_to_command.get(recognized_gesture) is None:
+            print(f"[INFO] Gesture '{recognized_gesture}' not mapped to any command.")
+            return
+        # Send the associated command to the send_command_to_server.py module:
+        command = gesture_to_command.get(recognized_gesture)
+        if command in COMMANDS:
+            print(f"[INFO] Sending associated command: {command}")
+            client_to_server_queue.put(command)
+    
 
-        print("[INFO] Webcam opened correctly!")
+    # Select a webcam to capture video from.
+    cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+    # Register the SIGTERM signal handler to release the webcam and close OpenCV windows.
+    signal.signal(signal.SIGTERM, make_sigterm_handler(cap))
+    # Set the video codec, frame width, and height.
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    # cap.set(cv2.CAP_PROPFPS, 30)
 
-        try:
-            while True:
-                # Record start time for FPS
-                # start_time = tm.time()
-                
-                # Read a frame from the webcam.
-                ret, frame = cap.read()
-                # If the frame is not read correctly, print an error message and continue.
-                if not ret:
-                    # Wait for a short time before trying to read the frame again.
-                    tm.sleep(0.1)
-                    continue
-                
-                # Put the frame into the webcam queue.
-                # webcam_queue.put(frame.copy())
+    if not cap.isOpened():
+        print("[INFO] Webcam is not opened. Please check your webcam connection.")
+        return
 
-                # Convert the frame from OpenCV BGR format to RGB format.
-                # MediaPipe uses RGB format for image processing.
-                # OpenCV uses BGR format by default.
-                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                # Convert the frame from OpenCV to a numpy array.
-                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
-                
-                # Send live image data to perform gesture recognition.
-                # The results are accessible via the `result_callback` provided in
-                # the `GestureRecognizerOptions` object.
-                # The gesture recognizer must be created with the live stream mode.
-                # The frame timestamp is calculated in milliseconds.
-                # This is used to synchronize the frames with the results.
-                # The timestamp is calculated using the OpenCV tick count and tick frequency.
-                # This is necessary to ensure that the results are processed in the correct order.
-                # The timestamp is used to synchronize the frames with the results.
-                frame_timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
-                # Call the recognizer to process the image and recognize gestures.
-                # The recognizer will call the `get_result` function with the recognized gestures.
-                recognizer.recognize_async(mp_image, frame_timestamp_ms)
-                
-                # Draw last predicted gesture text (not needed due to AJAX)
-                # cv2.putText(frame, f'Gesture: {last_predicted}', (10, 30),
-                #            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    print("[INFO] Webcam opened correctly!")
 
-                # Draw hand landmarks for visualization
-                draw_results = hands_draw.process(rgb_frame)
-                if draw_results.multi_hand_landmarks:
-                    for hand_landmarks in draw_results.multi_hand_landmarks:
-                        mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                
-                # Calculate and display FPS
-                # end_time = tm.time()
-                # fps = 1.0 / (end_time - start_time) if (end_time - start_time) > 0 else 0.0
-                # cv2.putText(frame, f'FPS: {fps:.2f}', (10, 70),
-                #            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-                
-                # Draw FPS using JetBrains Mono font via PIL for custom font support
-                # try:
-                #     from PIL import Image, ImageDraw, ImageFont
-                #     # Convert to PIL image
-                #     pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-                #     draw = ImageDraw.Draw(pil_img)
-                #     # Load the JetBrains Mono font (ensure the .ttf file is in working directory)
-                #     font = ImageFont.truetype('JetBrainsMono-Regular.ttf', 20)
-                #     # Position at top-left corner (x=10, y=10)
-                #     draw.text((10, 10), f'FPS: {fps:.2f}', font=font, fill=(255, 0, 0))
-                #     # Convert back to OpenCV image
-                #     frame = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
-                # except Exception as e:
-                #     # Fallback to default font if PIL or TTF not available
-                #     cv2.putText(frame, f'FPS: {fps:.2f}', (10, 20),
-                #                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-                #     # Optionally log the error
-                #     # print(f"Font fallback due to: {e}")
-                
-                
-                 # Send processed frame (with overlays) to queue for web interface
-                webcam_queue.put(frame.copy())  # now includes gesture text, landmarks, and FPS
+    try:
+        while True:
+            # Record start time for FPS
+            # start_time = tm.time()
+            
+            # Read a frame from the webcam.
+            ret, frame = cap.read()
+            # If the frame is not read correctly, print an error message and continue.
+            if not ret:
+                # Wait for a short time before trying to read the frame again.
+                tm.sleep(0.1)
+                continue
+            
+            # Put the frame into the webcam queue.
+            # webcam_queue.put(frame.copy())
 
-                
-                # Break the loop and release the webcam if the user presses the 'q' key.
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-        finally:
-            # Release the webcam and close all OpenCV windows.
-            cap.release()
-            # Wait for a short time to ensure the webcam is released properly.
-            tm.sleep(0.1)
-            cv2.destroyAllWindows()
+            # Convert the frame from OpenCV BGR format to RGB format.
+            # MediaPipe uses RGB format for image processing.
+            # OpenCV uses BGR format by default.
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            result = hands.process(rgb_frame)
+            
+           
+            
+            # Draw last predicted gesture text (not needed due to AJAX)
+            # cv2.putText(frame, f'Gesture: {last_predicted}', (10, 30),
+            #            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+             # --- 1) Decide recognized_gesture ---
+            if not result.multi_hand_landmarks:
+                # No hand → never run the model
+                recognized_gesture = "None"
+            else:
+                # Build input feature vector of length 126
+                feats = []
+                # Collect landmarks for up to two hands
+                for hand_landmarks in result.multi_hand_landmarks[:2]:
+                    for lm in hand_landmarks.landmark:
+                        feats.extend([lm.x, lm.y, lm.z])
+                # If only one hand is detected, pad the second hand with zeros
+                if len(result.multi_hand_landmarks) == 1:
+                    feats.extend([0.0] * (21 * 3))
+                # Draw landmarks on the frame
+                for hand_landmarks in result.multi_hand_landmarks:
+                    mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+
+                # Perform inference only when there is at least one hand
+                x = torch.tensor(feats, dtype=torch.float32).unsqueeze(0).to(device)
+                with torch.no_grad():
+                    logits          = model(x)
+                    pred_class      = logits.argmax(dim=1).item()
+                    recognized_gesture = class_names[pred_class]
+            print(f"[INFO] Recognized gesture: {recognized_gesture} (gesture_recognizer.py)")
+            send_result(recognized_gesture)
+            
+            # Calculate and display FPS
+            # end_time = tm.time()
+            # fps = 1.0 / (end_time - start_time) if (end_time - start_time) > 0 else 0.0
+            # cv2.putText(frame, f'FPS: {fps:.2f}', (10, 70),
+            #            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+            
+            # Draw FPS using JetBrains Mono font via PIL for custom font support
+            # try:
+            #     from PIL import Image, ImageDraw, ImageFont
+            #     # Convert to PIL image
+            #     pil_img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            #     draw = ImageDraw.Draw(pil_img)
+            #     # Load the JetBrains Mono font (ensure the .ttf file is in working directory)
+            #     font = ImageFont.truetype('JetBrainsMono-Regular.ttf', 20)
+            #     # Position at top-left corner (x=10, y=10)
+            #     draw.text((10, 10), f'FPS: {fps:.2f}', font=font, fill=(255, 0, 0))
+            #     # Convert back to OpenCV image
+            #     frame = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+            # except Exception as e:
+            #     # Fallback to default font if PIL or TTF not available
+            #     cv2.putText(frame, f'FPS: {fps:.2f}', (10, 20),
+            #                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+            #     # Optionally log the error
+            #     # print(f"Font fallback due to: {e}")
+            
+            
+            # Send processed frame (with overlays) to queue for web interface
+            webcam_queue.put(frame.copy())
+            
+            # Break the loop and release the webcam if the user presses the 'q' key.
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    finally:
+        # Release the webcam and close all OpenCV windows.
+        cap.release()
+        # Wait for a short time to ensure the webcam is released properly.
+        tm.sleep(0.1)
+        cv2.destroyAllWindows()

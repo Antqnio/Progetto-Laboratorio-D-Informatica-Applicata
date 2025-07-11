@@ -16,7 +16,7 @@ import multiprocessing
 import ctypes
 import re
 from src.gesture_recognizer.gesture_recognizer import start_gesture_recognition
-from client_constants import COMMANDS
+from client_constants import COMMANDS, GESTURES
 from queue import Empty
 
 # Flask app setup
@@ -27,8 +27,6 @@ app = Flask(
 )
 
 
-# List of available gestures
-GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
 
 # Gesture-command mapping
 gesture_to_command = {}
@@ -215,8 +213,7 @@ def start_recognition() -> "Response":
         global webcam_frame_queue
         webcam_frame_queue = multiprocessing.Queue()
         global last_gesture
-        # 11 is the max string length in GESTURES list. +1 for \0
-        last_gesture = multiprocessing.Array(ctypes.c_char, 11+1)
+        last_gesture = multiprocessing.Array(ctypes.c_char, 30)
         # global flask_to_web_interface_queue
         # flask_to_web_interface_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
@@ -376,7 +373,7 @@ def send_recognized_gesture() -> "Response":
         print("[DEBUG] Recognition process is not active (send_recognized_gesture())")
         return jsonify({"status": "error", "message": "Gesture recognizer process is not running."}), 503
     global last_gesture
-    print("[INFO] Sending recognized gesture to web interface")
+    print(f"[INFO] Sending recognized gesture ({last_gesture}) to web interface")
     # Legge la stringa dalla memoria condivisa
     raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Rimuove zeri finali
     gesture = raw_bytes.decode()
