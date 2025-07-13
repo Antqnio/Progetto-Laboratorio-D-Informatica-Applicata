@@ -29,8 +29,7 @@ def send_command_to_server(gesture_recognizer_to_socket_queue : "multiprocessing
         None
     Behavior:
         - Connects to the server using SERVER_IP and SERVER_PORT.
-        - Waits for commands from the queue, appends a delimiter '|', and sends them to the server.
-        - If no command is received (i.e., command is None), prints an info message and breaks the loop.
+        - Waits for commands from the queue and sends them to the server.
         - Handles connection errors and prints error messages if the connection fails.
         - If the connection is lost, it will attempt to reconnect indefinitely.
     """
@@ -66,9 +65,6 @@ def send_command_to_server(gesture_recognizer_to_socket_queue : "multiprocessing
                 while True:
                     # Wait for a command from the queue
                     command = gesture_recognizer_to_socket_queue.get()
-                    if command is None:
-                        print("[INFO] Popped argument is None: received, exiting...")
-                        return
                     print(f"[INFO] Sending command to server: {command}")
                     s.sendall(command.encode())
         except SystemExit:

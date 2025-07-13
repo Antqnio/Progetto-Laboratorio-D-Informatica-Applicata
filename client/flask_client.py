@@ -132,8 +132,7 @@ def index():
         else:
             print(f"[ERROR] Unknown action: {action}")
             return jsonify({"status": "error", "message": "Unknown action."}, 400)
-        
-    # GET: only when the user opens the page for the first time
+    # GET: only when the user opens the page for the first time or refreshes it
     global recognition_active
     return render_template(
         "index.html",
