@@ -92,13 +92,11 @@ def index():
         - For GET requests: Renders the "index.html" template with gesture, command, and configuration data.
         - For POST requests: Returns a JSON response indicating the result of the action.
     """
-
+    # List of available configuration files (without .json extension)
+    config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
+    
     if request.method == "POST":
         global gesture_to_command
-
-        # List of available configuration files (without .json extension)
-        config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
-        
         # Used only for the "save" action
         # request.form.get("config_name_select") is used when the user selects a config from the dropdown
         # request.form.get("config_name_text") is used when the user types a new config
@@ -135,6 +133,7 @@ def index():
             print(f"[ERROR] Unknown action: {action}")
             return jsonify({"status": "error", "message": "Unknown action."}, 400)
     # GET: only when the user opens the page for the first time
+    global recognition_active
     return render_template(
         "index.html",
         gestures=GESTURES,
