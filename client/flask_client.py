@@ -27,8 +27,7 @@ app = Flask(
 )
 
 
-# List of available gestures
-GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
+
 
 # Gesture-command mapping
 gesture_to_command = {}
@@ -93,7 +92,8 @@ def index():
     """
     # List of available configuration files (without .json extension)
     config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
-    
+    # List of available gestures
+    GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
     if request.method == "POST":
         global gesture_to_command
         # Used only for the "save" action
