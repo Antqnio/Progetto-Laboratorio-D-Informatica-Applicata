@@ -74,7 +74,7 @@ async function changeFormFields(e) {
             input.value = configData[key];
         }
     } catch (error) {
-        console.error("Errore durante il fetch del JSON:", error);
+        console.error("Eerror during JSON fetch:", error);
     }
 }
 
