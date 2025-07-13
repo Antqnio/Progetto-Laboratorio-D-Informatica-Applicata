@@ -83,7 +83,7 @@
                     The form will submit the gesture to commands mappings when the user clicks "Apply" or "Save". 
                 -->
                 <div id="gesture-table">
-                    {% for gesture in gestures %}
+                    {% for gesture in gestures if gesture != 'None' and gesture is not none %}
                     <div class="gesture-row">
                         <label class="gesture-label" for="{{ gesture }}">
                             <!--
@@ -92,13 +92,24 @@
                                 The icon is displayed before the gesture name in the label.
                             -->
                             <span class="gesture-icon">
-                                {% if gesture == "Thumb_Up" %}👍
-                                {% elif gesture == "Thumb_Down" %}👎
-                                {% elif gesture == "Open_Palm" %}🖐️
-                                {% elif gesture == "Closed_Fist" %}✊
-                                {% elif gesture == "Victory" %}✌️
-                                {% elif gesture == "ILoveYou" %}🤟
-                                {% elif gesture == "Pointing_Up" %}👆
+                                {% if gesture == "Like" %}👍
+                                {% elif gesture == "Dislike" %}👎
+                                {% elif gesture == "One" %}👆
+                                {% elif gesture == "Two_Up" %}✌️
+                                {% elif gesture == "Two_Up_Inverted" %}✌️
+                                {% elif gesture == "Three" %}
+                                {% elif gesture == "Three2" %}
+                                {% elif gesture == "Four" %}
+                                {% elif gesture == "Peace" %}✌️
+                                {% elif gesture == "Peace_Inverted" %}✌️
+                                {% elif gesture == "Stop" %}🤚
+                                {% elif gesture == "Stop_Inverted" %}🤚
+                                {% elif gesture == "Fist" %}✊
+                                {% elif gesture == "Palm" %}🖐️
+                                {% elif gesture == "Mute" %}🤫
+                                {% elif gesture == "Rock" %}🤘
+                                {% elif gesture == "Call" %}🤙
+                                {% elif gesture == "Ok" %}👌
                                 {% else %}❓
                                 {% endif %}
                             </span>
