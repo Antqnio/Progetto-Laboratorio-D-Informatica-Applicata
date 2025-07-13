@@ -93,7 +93,6 @@ def index():
     # List of available configuration files (without .json extension)
     config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
     # List of available gestures
-    GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
     if request.method == "POST":
         global gesture_to_command
         global recognition_active
