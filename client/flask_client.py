@@ -74,7 +74,6 @@ def index():
     GET:
         - Renders the main configuration page, displaying available gesture-command mappings,
         available commands, and saved configuration files.
-
     POST:
         - Handles two main actions from the form:
             1. "apply": Updates the in-memory gesture-to-command mapping (`gesture_to_command`)
@@ -214,8 +213,6 @@ def start_recognition() -> "Response":
         global last_gesture
         # 11 is the max string length in GESTURES list. +1 for \0
         last_gesture = multiprocessing.Array(ctypes.c_char, 11+1)
-        # global flask_to_web_interface_queue
-        # flask_to_web_interface_queue = multiprocessing.Queue()
         # Pass gesture_to_command as an argument
         global gesture_to_command
         global gesture_recognizer_to_socket_queue
@@ -374,8 +371,8 @@ def send_recognized_gesture() -> "Response":
         return jsonify({"status": "error", "message": "Gesture recognizer process is not running."}), 503
     global last_gesture
     print("[INFO] Sending recognized gesture to web interface")
-    # Legge la stringa dalla memoria condivisa
-    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Rimuove zeri finali
+    # Reads string from shared memory
+    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Removes ending zeros
     gesture = raw_bytes.decode()
     print(f"[INFO] Recognized gesture: {gesture} (flask_client.py)")
     return jsonify({"status": "ok", "message": gesture})
