@@ -91,11 +91,12 @@ def index():
         - For POST requests: Returns a JSON response indicating the result of the action.
     """
 
+    # List of available configuration files (without .json extension)
+    config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
+    
     if request.method == "POST":
         global gesture_to_command
-
-        # List of available configuration files (without .json extension)
-        config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
+        global recognition_active
         
         # Used only for the "save" action
         # request.form.get("config_name_select") is used when the user selects a config from the dropdown
