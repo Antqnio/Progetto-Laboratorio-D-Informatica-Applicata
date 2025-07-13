@@ -72,7 +72,6 @@ def index():
     GET:
         - Renders the main configuration page, displaying available gesture-command mappings,
         available commands, and saved configuration files.
-
     POST:
         - Handles two main actions from the form:
             1. "apply": Updates the in-memory gesture-to-command mapping (`gesture_to_command`)
@@ -93,7 +92,8 @@ def index():
 
     # List of available configuration files (without .json extension)
     config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
-    
+    # List of available gestures
+    GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
     if request.method == "POST":
         global gesture_to_command
         global recognition_active
@@ -214,9 +214,8 @@ def start_recognition() -> "Response":
         global webcam_frame_queue
         webcam_frame_queue = multiprocessing.Queue()
         global last_gesture
-        last_gesture = multiprocessing.Array(ctypes.c_char, 30)
-        # global flask_to_web_interface_queue
-        # flask_to_web_interface_queue = multiprocessing.Queue()
+        # 11 is the max string length in GESTURES list. +1 for \0
+        last_gesture = multiprocessing.Array(ctypes.c_char, 11+1)
         # Pass gesture_to_command as an argument
         global gesture_to_command
         global gesture_recognizer_to_socket_queue
@@ -374,9 +373,9 @@ def send_recognized_gesture() -> "Response":
         print("[DEBUG] Recognition process is not active (send_recognized_gesture())")
         return jsonify({"status": "error", "message": "Gesture recognizer process is not running."}), 503
     global last_gesture
-    print(f"[INFO] Sending recognized gesture ({last_gesture}) to web interface")
-    # Legge la stringa dalla memoria condivisa
-    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Rimuove zeri finali
+    print("[INFO] Sending recognized gesture to web interface")
+    # Reads string from shared memory
+    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Removes ending zeros
     gesture = raw_bytes.decode()
     print(f"[INFO] Recognized gesture: {gesture} (flask_client.py)")
     return jsonify({"status": "ok", "message": gesture})
