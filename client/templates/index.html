@@ -27,7 +27,6 @@
     - configs: List of available configuration names.
     - gestures: List of gesture names.
     - commands: List of available commands.
-    - mappings: Dictionary mapping gestures to commands for the selected configuration.
     - active: Boolean indicating if the gesture recognizer is active.
 
     Static Files:
@@ -81,9 +80,7 @@
                 </div>
                 
                 <!--
-                    The 'mappings' dictionary contains the current gesture-command mappings for the selected configuration.
-                    Each key is a gesture name, and the value is the command assigned to that gesture.
-                    The form will submit these mappings when the user clicks "Apply" or "Save". 
+                    The form will submit the gesture to commands mappings when the user clicks "Apply" or "Save". 
                 -->
                 <div id="gesture-table">
                     {% for gesture in gestures %}
@@ -114,9 +111,8 @@
                         </label>
                         
                         <!--
-                            The select element allows the user to choose a command for the gesture.
+                            The select element allows the user to bind a command to that gesture.
                             The options are populated from the 'commands' list passed from the Flask backend.
-                            The selected command for each gesture is determined by the 'mappings' dictionary. 
                         -->
                         <select class="gesture-select" id="{{ gesture }}" name="{{ gesture }}">
                             <option value="-- No Command --">-- No Command --</option>

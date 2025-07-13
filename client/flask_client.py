@@ -92,18 +92,18 @@ def index():
         - For GET requests: Renders the "index.html" template with gesture, command, and configuration data.
         - For POST requests: Returns a JSON response indicating the result of the action.
     """
-    global gesture_to_command
-
-    # List of available configuration files (without .json extension)
-    config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
-    
-    # Used only for the "save" action
-    # request.form.get("config_name_select") is used when the user selects a config from the dropdown
-    # request.form.get("config_name_text") is used when the user types a new config
-    # If both are empty, selected_config will be an empty string
-    selected_config = request.form.get("config_name_select") or request.form.get("config_name_text", "")
 
     if request.method == "POST":
+        global gesture_to_command
+
+        # List of available configuration files (without .json extension)
+        config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
+        
+        # Used only for the "save" action
+        # request.form.get("config_name_select") is used when the user selects a config from the dropdown
+        # request.form.get("config_name_text") is used when the user types a new config
+        # If both are empty, selected_config will be an empty string
+        selected_config = request.form.get("config_name_select") or request.form.get("config_name_text", "")
         action = request.form.get("action")
         if action == "apply":
             # Update gesture_to_command but does not save to file
@@ -139,10 +139,8 @@ def index():
         "index.html",
         gestures=GESTURES,
         commands=COMMANDS,
-        mappings=gesture_to_command,
         active=recognition_active,
         configs=config_files,
-        selected_config=selected_config
     )
 
 @app.route("/get_json_file", methods=["GET"])
