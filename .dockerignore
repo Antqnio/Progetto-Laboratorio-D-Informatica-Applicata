@@ -22,3 +22,6 @@ struttura.txt
 
 # Ignore log files
 *.log
+
+# Ignore model_training folder
+model_training/

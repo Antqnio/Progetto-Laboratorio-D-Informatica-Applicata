@@ -196,3 +196,4 @@ cython_debug/
 # Text files
 struttura.txt
 
+model_training/

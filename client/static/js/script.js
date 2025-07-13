@@ -74,7 +74,7 @@ async function changeFormFields(e) {
             input.value = configData[key];
         }
     } catch (error) {
-        console.error("Errore durante il fetch del JSON:", error);
+        console.error("Eerror during JSON fetch:", error);
     }
 }
 
@@ -217,11 +217,11 @@ async function gestureFeedback() {
         }
         else {
             console.error("Occurred error while trying to get gesture feedback:", resp.message);
-            //message.style.display = "none";
+            // message.style.display = "none";
         }
     } catch (err) {
         console.error("Network error while checking trying to communicate with Flask client:", err);
-        //message.style.display = "none";
+        // message.style.display = "none";
     }
     
 }

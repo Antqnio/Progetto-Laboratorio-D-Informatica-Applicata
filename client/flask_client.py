@@ -27,14 +27,7 @@ app = Flask(
 )
 
 
-# List of available gestures (grouped: like/dislike, one/two/three/four, peace/peace_inverted, stop/stop_inverted, etc.)
-GESTURES = (
-    'like', 'dislike',
-    'one', 'two_up', 'two_up_inverted', 'three', 'three2', 'four',
-    'peace', 'peace_inverted',
-    'stop', 'stop_inverted',
-    'fist', 'palm', 'mute', 'rock', 'call', 'ok'
-)
+
 
 # Gesture-command mapping
 gesture_to_command = {}
@@ -80,7 +73,6 @@ def index():
     GET:
         - Renders the main configuration page, displaying available gesture-command mappings,
         available commands, and saved configuration files.
-
     POST:
         - Handles two main actions from the form:
             1. "apply": Updates the in-memory gesture-to-command mapping (`gesture_to_command`)
@@ -98,18 +90,17 @@ def index():
         - For GET requests: Renders the "index.html" template with gesture, command, and configuration data.
         - For POST requests: Returns a JSON response indicating the result of the action.
     """
-    global gesture_to_command
-
     # List of available configuration files (without .json extension)
     config_files = [f[:-5] for f in os.listdir(CONFIG_DIR) if f.endswith(".json")]
-    
-    # Used only for the "save" action
-    # request.form.get("config_name_select") is used when the user selects a config from the dropdown
-    # request.form.get("config_name_text") is used when the user types a new config
-    # If both are empty, selected_config will be an empty string
-    selected_config = request.form.get("config_name_select") or request.form.get("config_name_text", "")
-
+    # List of available gestures
+    GESTURES = ("Thumb_Up", "Thumb_Down", "Open_Palm", "Closed_Fist", "Victory", "ILoveYou", "Pointing_Up")
     if request.method == "POST":
+        global gesture_to_command
+        # Used only for the "save" action
+        # request.form.get("config_name_select") is used when the user selects a config from the dropdown
+        # request.form.get("config_name_text") is used when the user types a new config
+        # If both are empty, selected_config will be an empty string
+        selected_config = request.form.get("config_name_select") or request.form.get("config_name_text", "")
         action = request.form.get("action")
         if action == "apply":
             # Update gesture_to_command but does not save to file
@@ -140,18 +131,17 @@ def index():
         else:
             print(f"[ERROR] Unknown action: {action}")
             return jsonify({"status": "error", "message": "Unknown action."}, 400)
-    # GET: only when the user opens the page for the first time
+    # GET: only when the user opens the page for the first time or refreshes it
+    global recognition_active
     return render_template(
         "index.html",
         gestures=GESTURES,
         commands=COMMANDS,
-        mappings=gesture_to_command,
         active=recognition_active,
         configs=config_files,
-        selected_config=selected_config
     )
 
-@app.route("/get_json_file")
+@app.route("/get_json_file", methods=["GET"])
 def get_json_file() -> "Response":
     """
     Flask route to serve a JSON file from the static/configs directory.
@@ -199,7 +189,7 @@ flask_to_web_interface_queue = None
 # This queue will be used to send recognized gestures from gesture_recognizer.py to flask_client.py
 
 
-@app.route("/start")
+@app.route("/start", methods=["GET"])
 def start_recognition() -> "Response":
     """
     Starts the gesture recognition process if it is not already active.
@@ -236,7 +226,7 @@ def start_recognition() -> "Response":
         print("[INFO] Gesture recognition process started.")
     return jsonify({"status": "ok", "active": True})
 
-@app.route("/stop")
+@app.route("/stop", methods=["GET"])
 def stop_recognition() -> "Response":
     """
     Stops the gesture recognition process if it is currently active.
@@ -270,7 +260,7 @@ def stop_recognition() -> "Response":
 
     return jsonify({"status": "ok", "active": False})
 
-@app.route("/video_feed")
+@app.route("/video_feed", methods=["GET"])
 def video_feed() -> "Response":
     """
     Route that streams video frames from the server to the client as an MJPEG stream.
@@ -317,7 +307,7 @@ def video_feed() -> "Response":
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
-@app.route("/stop_client")
+@app.route("/stop_client", methods=["GET"])
 def stop_client() -> "Response":
     """
     Flask route to stop the client application.
@@ -335,7 +325,7 @@ def stop_client() -> "Response":
     print("[INFO] Client process stopped.")
     return jsonify({"status": "ok", "message": "Client stopped successfully."})
 
-@app.route("/check_server")
+@app.route("/check_server", methods=["GET"])
 def check_server() -> "Response":
     """
     Flask route to check if the server is running.
@@ -355,7 +345,7 @@ def check_server() -> "Response":
         print("[ERROR] Server is not running.")
         return jsonify({"status": "error", "message": "Server is not running."}), 503
     
-@app.route("/get_recognized_gesture")
+@app.route("/get_recognized_gesture", methods=["GET"])
 def send_recognized_gesture() -> "Response":
     """
     Retrieve the latest recognized gesture from the background recognizer.
@@ -383,8 +373,8 @@ def send_recognized_gesture() -> "Response":
         return jsonify({"status": "error", "message": "Gesture recognizer process is not running."}), 503
     global last_gesture
     print("[INFO] Sending recognized gesture to web interface")
-    # Legge la stringa dalla memoria condivisa
-    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Rimuove zeri finali
+    # Reads string from shared memory
+    raw_bytes = bytes(last_gesture[:]).rstrip(b'\x00')  # Removes ending zeros
     gesture = raw_bytes.decode()
     print(f"[INFO] Recognized gesture: {gesture} (flask_client.py)")
     return jsonify({"status": "ok", "message": gesture})

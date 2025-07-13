@@ -97,8 +97,8 @@ def start_gesture_recognition(gesture_to_command: dict, webcam_queue: "multiproc
         Processes the gesture recognition result, sending recognized gesture commands to the server at specified intervals.
         Args:
             result (GestureRecognizerResult): The result object containing recognized gestures.
-            output_image (mp.Image): The output image associated with the recognition (unused in this function).
-            timestamp_ms (int): The timestamp in milliseconds when the result was produced.
+            output_image (mp.Image): The output image associated with the recognition (unused in this function. Required by the MediaPipe callback signature).
+            timestamp_ms (int): The timestamp in milliseconds when the result was produced (unused in this function. Required by the MediaPipe callback signature).
         Side Effects:
             - Increments a nonlocal counter to control the frequency of command sending.
             - Sends recognized gesture commands to the server via `client_to_server_queue` every 10th call.
