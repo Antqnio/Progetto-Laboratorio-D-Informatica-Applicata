@@ -34,7 +34,8 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 - Working webcam (see WSL notes below)
 
 ## Installation and Usage
-0. Clone the repo https://github.com/Antqnio/Progetto-Laboratorio-D-Informatica-Applicata.git locally (on your windows os).
+1. Clone the repo https://github.com/Antqnio/Progetto-Laboratorio-D-Informatica-Applicata.git on WSL.
+2. Move the server folder into your Windows machine.
 ### Server (Windows)
 
 1. Open PowerShell in the project folder.
@@ -68,7 +69,7 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 
 #### Webcam Access in WSL
 
-To enable webcam access in WSL, you need to install and use `usbipd` via Windows PowerShell:
+To enable webcam access in WSL, you need to install and use (before opening the Docker container) `usbipd` via Windows PowerShell:
 
 ```powershell
 wsl --update
