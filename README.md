@@ -97,6 +97,10 @@ These lines set the video frame format and resolution for the webcam. If you sel
 If your webcam does not work out of the box, you should try changing the format and resolution in these lines to values that are supported by your device.   
 By default, we use the MJPEG format and a resolution of 640x480, which are commonly supported by most webcams.
 
+## Model training
+If you want to try training the model yourself, you need to use uv virtual enviroments and install the `requirements.lock` file in the `model/` folder.
+We strongly advise you to use CUDA in order to speed up the training process.
+
 ## Main Features
 
 - **Gesture-Command Configuration:** Bind gestures to system commands via the web UI.
