@@ -212,8 +212,8 @@ def start_recognition() -> "Response":
         global webcam_frame_queue
         webcam_frame_queue = multiprocessing.Queue()
         global last_gesture
-        # 11 is the max string length in GESTURES list. +1 for \0
-        last_gesture = multiprocessing.Array(ctypes.c_char, 11+1)
+        # 15 is the max string length in GESTURES list. +1 for \0
+        last_gesture = multiprocessing.Array(ctypes.c_char, 15+1)
         # Pass gesture_to_command as an argument
         global gesture_to_command
         global gesture_recognizer_to_socket_queue
