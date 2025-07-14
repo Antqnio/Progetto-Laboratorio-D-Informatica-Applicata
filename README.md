@@ -69,7 +69,7 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 
 #### Webcam Access in WSL
 
-To enable webcam access in WSL, you need to install and use (before opening the Docker contaienr) `usbipd` via Windows PowerShell:
+To enable webcam access in WSL, you need to install and use (before opening the Docker container) `usbipd` via Windows PowerShell:
 
 ```powershell
 wsl --update
