@@ -10,10 +10,6 @@
 
 
 	"runArgs": [
-		// Add custom hostname for host-gateway
-		"--add-host=host.docker.internal:host-gateway",
-		// Expose port 9000 from container to host
-		"-p", "9000:9000",
 		// Mounts the webcam
 		"--device=/dev/video0:/dev/video0",
 		// Passes the DISPLAY variable (in WSL you already have export DISPLAY=:0)
