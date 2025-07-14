@@ -35,7 +35,7 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 
 ## Installation and Usage
 1. Clone the repo https://github.com/Antqnio/Progetto-Laboratorio-D-Informatica-Applicata.git on WSL.
-2. Cut the server folder into your Windows machine.
+2. Move the server folder into your Windows machine.
 ### Server (Windows)
 
 1. Open PowerShell in the project folder.
