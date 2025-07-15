@@ -32,10 +32,11 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 - VSCode and Dev Containers extension (ms-vscode-remote.remote-containers)
 - Windows (for the server, which uses Windows system APIs)
 - Working webcam (see WSL notes below)
+- Docker Desktop (with WSL integration enabled)
 
 ## Installation and Usage
 1. Clone the repo https://github.com/Antqnio/Progetto-Laboratorio-D-Informatica-Applicata.git on WSL.
-2. Move the server folder into your Windows machine.
+2. Move the `server/` folder, 'start_server.ps1` and `webcam_enable.ps1` into your Windows machine.
 ### Server (Windows)
 
 1. Open PowerShell in the project folder.
@@ -52,9 +53,12 @@ The web interface lets you configure gesture-command mappings, manage multiple c
 
 ### Client (Linux/Mac/WSL)
 
-1. Open VSCode.
-2. Run the Dev Containers: Open Folder in Container... command and select the local folder - you can do so by clicking on the dialog window in the right corner of the screen or by opening the command palette (CTRL + SHIFT + P) and searching for it.
-2. Run:
+1. Open Docker Desktop (assure that Docker Engine is running and that you have WSL integration enabled).
+2. Launch `webcam_enable.ps1` from your Windows host and bind your webcam to WSL.
+3. Open the client folder (on WSL) in VSCode.
+4. Find and set SERVER_IP: In your Linux/WSL terminal, run `ip route | grep default`. The output will show a line like default via `X.X.X.X`, where `X.X.X.X` is your host’s IP address (this is the Windows host’s IP as seen by WSL). Copy this IPv4 address. Then open `send_command_to_server.py` in a text editor (VSCode) and set the `SERVER_IP` variable to that address.
+5. Run the Dev Containers: Open Folder in Container... command and select the local folder - you can do so by clicking on the dialog window in the right corner of the screen or by opening the command palette (CTRL + SHIFT + P) and searching for it.
+6. Run:
 
    ```sh
    ./start_client.sh
