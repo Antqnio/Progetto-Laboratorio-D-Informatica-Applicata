@@ -12,7 +12,9 @@ import signal
 import ctypes
 
 # TCP server configuration
-SERVER_IP = "host.docker.internal"
+# Set SERVER_IP manually before starting the client.
+# Refer to the README.md for instructions on how to initialize it correctly.
+SERVER_IP = ""
 SERVER_PORT = 9000
 
 
