@@ -111,14 +111,6 @@ We strongly advise you to use CUDA in order to speed up the training process.
 - **Recognizer Control:** Start/stop the gesture recognizer from the UI.
 - **Live Webcam Feed:** See real-time video for gesture input.
 - **Supported Commands:** Volume control, open calculator, Task Manager, screenshot, Alt+Tab, Play/Pause, mouse scroll.
-- **Supported Gestures**:
-    - Thumb Up (👍)
-    - Thumb Down (👎)
-    - Open Palm (🖐️)
-    - Closed Fist (✊)
-    - Victory (✌️)
-    - I Love You (🤟)
-    - Pointing Up (👆)
 
 ## Authors
 
